@@ -4,27 +4,45 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:local="using:MediaForge.App"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="16">
-        <TextBlock
-            Text="{x:Bind ViewModel.Greeting, Mode=OneWay}"
-            Style="{StaticResource TitleTextBlockStyle}" />
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
-            <Button Command="{x:Bind ViewModel.IncrementCommand}">
-                <FontIcon Glyph="&#xE710;" FontSize="14" />
-            </Button>
-            <TextBlock
-                Text="{x:Bind ViewModel.Counter, Mode=OneWay}"
-                VerticalAlignment="Center"
-                MinWidth="40"
-                TextAlignment="Center"
-                Style="{StaticResource BodyStrongTextBlockStyle}" />
-            <Button Command="{x:Bind ViewModel.DecrementCommand}">
-                <FontIcon Glyph="&#xE738;" FontSize="14" />
-            </Button>
-        </StackPanel>
-    </StackPanel>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <InfoBar
+            Margin="12,8,12,0"
+            IsClosable="False"
+            IsOpen="{x:Bind ViewModel.IsPersistenceUnavailable, Mode=OneWay}"
+            Message="无法写入程序目录下的 config 文件夹。本次将使用默认参数，设置、队列和日志不会保存。请将程序移到可写目录后重新启动。"
+            Severity="Warning"
+            Title="当前为临时会话" />
+
+        <NavigationView
+            x:Name="RootNavigation"
+            Grid.Row="1"
+            AlwaysShowHeader="False"
+            IsBackButtonVisible="Collapsed"
+            IsSettingsVisible="True"
+            PaneDisplayMode="LeftCompact"
+            SelectionChanged="OnNavigationSelectionChanged">
+            <NavigationView.MenuItems>
+                <NavigationViewItem Content="转换" IsSelected="True" Tag="conversion">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE714;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem Content="预设" Tag="presets">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE8FD;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+            </NavigationView.MenuItems>
+
+            <Frame x:Name="ContentFrame" />
+        </NavigationView>
+    </Grid>
 </Page>

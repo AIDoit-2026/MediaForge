@@ -1,20 +1,41 @@
-using Microsoft.UI.Xaml.Controls;
+using MediaForge.App.Pages;
 using MediaForge.App.ViewModels;
-
-// To learn more about WinUI, the WinUI project structure,
-// and more about our project templates, see: http://aka.ms/winui-project-info.
+using MediaForge.Core.Configuration;
+using Microsoft.UI.Xaml.Controls;
 
 namespace MediaForge.App;
 
-/// <summary>
-/// The main content page displayed inside the application window.
-/// </summary>
 public sealed partial class MainPage : Page
 {
-    public MainPageViewModel ViewModel { get; } = new();
+    public MainPageViewModel ViewModel { get; }
 
-    public MainPage()
+    public MainPage(IApplicationPaths applicationPaths)
     {
+        ViewModel = new MainPageViewModel(applicationPaths);
         InitializeComponent();
+        ContentFrame.Navigate(typeof(ConversionPage));
+    }
+
+    private void OnNavigationSelectionChanged(
+        NavigationView sender,
+        NavigationViewSelectionChangedEventArgs args)
+    {
+        if (ContentFrame is null)
+        {
+            return;
+        }
+
+        var pageType = args.IsSettingsSelected
+            ? typeof(SettingsPage)
+            : (args.SelectedItemContainer?.Tag as string) switch
+            {
+                "presets" => typeof(PresetsPage),
+                _ => typeof(ConversionPage)
+            };
+
+        if (ContentFrame.CurrentSourcePageType != pageType)
+        {
+            ContentFrame.Navigate(pageType);
+        }
     }
 }
