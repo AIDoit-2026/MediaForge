@@ -20,7 +20,7 @@
 - [x] 使用官方 WinUI 模板创建 `MediaForge.App` unpackaged x64 项目，并建立解决方案。
 - [x] 创建 `MediaForge.Core`、`MediaForge.Infrastructure` 和测试项目，落实依赖方向。
 - [x] 配置 Debug/Release、版本号、应用图标和发布目录结构。
-- [ ] 建立依赖注入/组合根、应用级异常处理和结构化日志基础。
+- [x] 建立依赖注入/组合根、应用级异常处理和结构化日志基础。
 - [x] 创建 `config` 路径服务；不可写时进入默认参数临时会话并发布持续警告。
 - [ ] 建立 CI 或本地一键检查：还原、构建、测试、发布。
 
