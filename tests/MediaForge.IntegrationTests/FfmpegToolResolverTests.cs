@@ -40,6 +40,21 @@ public sealed class FfmpegToolResolverTests : IDisposable
         Assert.Equal(FfmpegToolSource.ApplicationDirectory, result.Toolset.Source);
     }
 
+    [Fact]
+    public async Task Version_reader_returns_a_structured_error_when_the_tool_cannot_start()
+    {
+        var toolset = new FfmpegToolset(
+            _root,
+            Path.Combine(_root, "missing-ffmpeg.exe"),
+            Path.Combine(_root, "missing-ffprobe.exe"),
+            FfmpegToolSource.ConfiguredDirectory);
+
+        var result = await new FfmpegVersionReader().ReadAsync(toolset);
+
+        Assert.False(result.IsSuccess);
+        Assert.Equal(FfmpegVersionReadResult.VersionCommandFailed, result.ErrorCode);
+    }
+
     private string CreateToolDirectory(string name)
     {
         var directory = Path.Combine(_root, name);
