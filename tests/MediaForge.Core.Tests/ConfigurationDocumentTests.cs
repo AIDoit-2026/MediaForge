@@ -61,4 +61,30 @@ public sealed class ConfigurationDocumentTests
         Assert.Equal("mp4", preset.Parameters.OutputContainer);
         Assert.Equal("libx264", preset.Parameters.Values["videoEncoder"]);
     }
+
+    [Fact]
+    public void Built_in_presets_have_stable_ids_and_expected_conversion_intent()
+    {
+        var presets = BuiltInPresetCatalog.All;
+
+        Assert.Collection(
+            presets,
+            youtube =>
+            {
+                Assert.Equal("YouTube 1080p", youtube.Name);
+                Assert.Equal("mp4", youtube.Parameters.OutputContainer);
+            },
+            archive =>
+            {
+                Assert.Equal("高质量归档", archive.Name);
+                Assert.Equal("mkv", archive.Parameters.OutputContainer);
+            },
+            audioOnly =>
+            {
+                Assert.Equal("仅音频", audioOnly.Name);
+                Assert.Equal("none", audioOnly.Parameters.Values["videoMode"]);
+            });
+
+        Assert.Equal(3, presets.Select(preset => preset.Id).Distinct().Count());
+    }
 }
