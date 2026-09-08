@@ -1,0 +1,59 @@
+# Build outputs
+[Bb]in/
+[Oo]bj/
+[Aa]rtifacts/
+[Dd]ebug/
+[Rr]elease/
+[Pp]ublish/
+x64/
+x86/
+ARM/
+ARM64/
+
+# Visual Studio and IDE state
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.rsuser
+
+# Test and coverage outputs
+TestResults/
+coverage/
+*.coverage
+*.coveragexml
+
+# NuGet
+packages/
+*.nupkg
+*.snupkg
+
+# Generated packaging files
+AppPackages/
+BundleArtifacts/
+Package.StoreAssociation.xml
+_pkginfo.txt
+
+# Local portable state and user-provided tools
+config/
+ffmpeg.exe
+ffprobe.exe
+ffplay.exe
+
+# Local .NET CLI state used by automation
+.dotnet-cli-home/
+
+# Logs, dumps, and temporary media
+*.log
+*.dmp
+*.tmp
+*.partial
+*.part
+
+# OS files
+Thumbs.db
+Desktop.ini
+.DS_Store

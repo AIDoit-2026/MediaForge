@@ -1,0 +1,18 @@
+* text=auto
+*.cs text eol=crlf
+*.xaml text eol=crlf
+*.csproj text eol=crlf
+*.props text eol=crlf
+*.targets text eol=crlf
+*.slnx text eol=crlf
+*.md text eol=lf
+*.json text eol=lf
+*.resw text eol=crlf
+*.png binary
+*.ico binary
+*.mp4 binary
+*.mkv binary
+*.webm binary
+*.mp3 binary
+*.wav binary
+*.flac binary
