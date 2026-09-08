@@ -25,13 +25,40 @@ public sealed class ConfigurationDocumentTests
         var document = new QueueDocument(
             QueueDocument.CurrentSchemaVersion,
             [
-                new PersistedConversionJob(Guid.NewGuid(), "input.mp4", "output.mp4", PersistedJobStatus.Running),
-                new PersistedConversionJob(Guid.NewGuid(), "input2.mp4", "output2.mp4", PersistedJobStatus.Succeeded)
+                new PersistedConversionJob(
+                    Guid.NewGuid(),
+                    "input.mp4",
+                    "output.mp4",
+                    PersistedJobStatus.Running,
+                    ConversionParameterSnapshot.CreateDefault()),
+                new PersistedConversionJob(
+                    Guid.NewGuid(),
+                    "input2.mp4",
+                    "output2.mp4",
+                    PersistedJobStatus.Succeeded,
+                    ConversionParameterSnapshot.CreateDefault())
             ]);
 
         var restored = document.RestoreAfterApplicationStart();
 
         Assert.Equal(PersistedJobStatus.Interrupted, restored.Jobs[0].Status);
         Assert.Equal(PersistedJobStatus.Succeeded, restored.Jobs[1].Status);
+    }
+
+    [Fact]
+    public void Preset_document_has_a_stable_schema_and_parameter_snapshot()
+    {
+        var preset = new PresetDocument(
+            PresetDocument.CurrentSchemaVersion,
+            Guid.NewGuid(),
+            "Custom MP4",
+            new ConversionParameterSnapshot("mp4", new Dictionary<string, string>
+            {
+                ["videoEncoder"] = "libx264"
+            }));
+
+        Assert.Equal(1, preset.SchemaVersion);
+        Assert.Equal("mp4", preset.Parameters.OutputContainer);
+        Assert.Equal("libx264", preset.Parameters.Values["videoEncoder"]);
     }
 }
