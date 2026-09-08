@@ -2,12 +2,89 @@
 <Page
     x:Class="MediaForge.App.Pages.SettingsPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:automation="using:Microsoft.UI.Xaml.Automation">
 
-    <StackPanel Padding="24,16,24,24" Spacing="16">
-        <TextBlock Text="设置" Style="{StaticResource TitleTextBlockStyle}" />
-        <TextBlock
-            Text="FFmpeg 路径、语言、主题和默认输出参数将在这里配置。"
-            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-    </StackPanel>
+    <ScrollViewer>
+        <StackPanel Padding="24,16,24,24" Spacing="16">
+            <TextBlock Text="设置" Style="{StaticResource TitleTextBlockStyle}" />
+            <TextBlock
+                Text="更改会保存到程序目录下的 config 文件夹。"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+
+            <InfoBar
+                x:Name="StatusInfoBar"
+                IsClosable="True"
+                IsOpen="False" />
+
+            <Grid ColumnSpacing="16" RowSpacing="12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="480" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" VerticalAlignment="Center" Text="语言" />
+                <ComboBox x:Name="LanguageComboBox" Grid.Row="0" Grid.Column="1" SelectedIndex="0">
+                    <ComboBoxItem Content="跟随系统" />
+                    <ComboBoxItem Content="简体中文" />
+                    <ComboBoxItem Content="English" />
+                </ComboBox>
+
+                <TextBlock Grid.Row="1" VerticalAlignment="Center" Text="主题" />
+                <ComboBox x:Name="ThemeComboBox" Grid.Row="1" Grid.Column="1" SelectedIndex="0">
+                    <ComboBoxItem Content="跟随系统" />
+                    <ComboBoxItem Content="浅色" />
+                    <ComboBoxItem Content="深色" />
+                </ComboBox>
+
+                <TextBlock Grid.Row="2" VerticalAlignment="Center" Text="FFmpeg 目录" />
+                <TextBox
+                    x:Name="FfmpegDirectoryTextBox"
+                    Grid.Row="2"
+                    Grid.Column="1"
+                    automation:AutomationProperties.Name="FFmpeg 目录"
+                    PlaceholderText="留空时检查 MediaForge.exe 所在目录" />
+
+                <TextBlock Grid.Row="3" VerticalAlignment="Center" Text="默认输出目录" />
+                <TextBox
+                    x:Name="DefaultOutputDirectoryTextBox"
+                    Grid.Row="3"
+                    Grid.Column="1"
+                    automation:AutomationProperties.Name="默认输出目录"
+                    PlaceholderText="留空时由转换任务决定" />
+
+                <TextBlock Grid.Row="4" VerticalAlignment="Center" Text="同名文件" />
+                <ComboBox x:Name="ConflictPolicyComboBox" Grid.Row="4" Grid.Column="1" SelectedIndex="2">
+                    <ComboBoxItem Content="跳过" />
+                    <ComboBoxItem Content="覆盖" />
+                    <ComboBoxItem Content="自动重命名" />
+                </ComboBox>
+
+                <TextBlock Grid.Row="5" VerticalAlignment="Center" Text="最大并行数" />
+                <NumberBox
+                    x:Name="MaxConcurrencyNumberBox"
+                    Grid.Row="5"
+                    Grid.Column="1"
+                    Maximum="4"
+                    Minimum="1"
+                    SmallChange="1"
+                    SpinButtonPlacementMode="Inline"
+                    Value="1" />
+            </Grid>
+
+            <Button
+                x:Name="SaveButton"
+                HorizontalAlignment="Left"
+                Click="OnSaveClick"
+                Content="保存设置" />
+        </StackPanel>
+    </ScrollViewer>
 </Page>

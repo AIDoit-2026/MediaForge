@@ -52,6 +52,28 @@ public sealed class AtomicJsonFileStoreTests : IDisposable
         Assert.False(Directory.Exists(paths.ConfigDirectory));
     }
 
+    [Fact]
+    public async Task Settings_store_persists_the_user_editable_settings()
+    {
+        var paths = new TestApplicationPaths(_root, canPersist: true);
+        var store = new ApplicationSettingsStore(paths, new AtomicJsonFileStore());
+        var expected = ApplicationSettings.CreateDefault() with
+        {
+            Language = ApplicationLanguage.English,
+            Theme = ApplicationTheme.Dark,
+            FfmpegDirectory = "C:\\Tools\\ffmpeg",
+            DefaultOutputDirectory = "D:\\Converted",
+            OutputConflictPolicy = OutputConflictPolicy.Skip,
+            MaxConcurrentJobs = 3
+        };
+
+        await store.SaveAsync(expected);
+        var loaded = await store.LoadAsync();
+
+        Assert.Equal(expected, loaded.Settings);
+        Assert.False(loaded.RecoveredFromCorruption);
+    }
+
     public void Dispose()
     {
         if (Directory.Exists(_root))
