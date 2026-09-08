@@ -1,3 +1,4 @@
+using MediaForge.Core.Configuration;
 using MediaForge.Infrastructure.Configuration;
 
 namespace MediaForge.IntegrationTests;
@@ -38,6 +39,19 @@ public sealed class AtomicJsonFileStoreTests : IDisposable
         Assert.Single(Directory.GetFiles(Path.GetDirectoryName(path)!, "settings.json.corrupt-*"));
     }
 
+    [Fact]
+    public async Task Settings_store_uses_defaults_without_writing_during_a_temporary_session()
+    {
+        var paths = new TestApplicationPaths(_root, canPersist: false);
+        var store = new ApplicationSettingsStore(paths, new AtomicJsonFileStore());
+
+        var loaded = await store.LoadAsync();
+        await store.SaveAsync(ApplicationSettings.CreateDefault() with { FfmpegDirectory = "tools" });
+
+        Assert.Equal(ApplicationSettings.CreateDefault(), loaded.Settings);
+        Assert.False(Directory.Exists(paths.ConfigDirectory));
+    }
+
     public void Dispose()
     {
         if (Directory.Exists(_root))
@@ -47,4 +61,22 @@ public sealed class AtomicJsonFileStoreTests : IDisposable
     }
 
     private sealed record TestSettings(string Theme, int Concurrency);
+
+    private sealed class TestApplicationPaths : IApplicationPaths
+    {
+        public TestApplicationPaths(string baseDirectory, bool canPersist)
+        {
+            BaseDirectory = baseDirectory;
+            ConfigDirectory = Path.Combine(baseDirectory, "config");
+            CanPersist = canPersist;
+        }
+
+        public string BaseDirectory { get; }
+
+        public string ConfigDirectory { get; }
+
+        public bool CanPersist { get; }
+
+        public string? PersistenceWarningCode => null;
+    }
 }
