@@ -1,10 +1,6 @@
+using MediaForge.App.Services;
+using MediaForge.Core.Diagnostics;
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Data;
-using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Navigation;
-using MediaForge.Infrastructure.Configuration;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -29,6 +25,8 @@ public partial class App : Application
     /// </summary>
     public static Microsoft.UI.Dispatching.DispatcherQueue DispatcherQueue { get; private set; } = null!;
 
+    public static ApplicationServices Services { get; private set; } = null!;
+
     /// <summary>
     /// The native window handle (HWND). Use for file pickers,
     /// <c>DataTransferManager</c>, and any WinRT interop that requires
@@ -43,6 +41,8 @@ public partial class App : Application
     public App()
     {
         InitializeComponent();
+        UnhandledException += OnUnhandledException;
+        TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
     }
 
     /// <summary>
@@ -51,12 +51,35 @@ public partial class App : Application
     /// <param name="args">Details about the launch request and process.</param>
     protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
     {
-        var applicationPaths = PortableApplicationPaths.Create(AppContext.BaseDirectory);
-        var mainWindow = new MainWindow();
+        try
+        {
+            Services = ApplicationServices.Create(AppContext.BaseDirectory);
+            Services.Logger.Log(new ApplicationLogEntry(
+                DateTimeOffset.UtcNow,
+                ApplicationLogLevel.Information,
+                "ApplicationLaunched"));
 
-        mainWindow.Initialize(applicationPaths);
-        Window = mainWindow;
-        DispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread();
-        Window.Activate();
+            var mainWindow = new MainWindow();
+            mainWindow.Initialize(Services.ApplicationPaths);
+            Window = mainWindow;
+            DispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread();
+            Window.Activate();
+        }
+        catch (Exception error)
+        {
+            Services?.Logger.LogError("ApplicationLaunchFailed", error);
+            throw;
+        }
+    }
+
+    private static void OnUnhandledException(
+        object sender,
+        Microsoft.UI.Xaml.UnhandledExceptionEventArgs args) =>
+        Services?.Logger.LogError("UnhandledUiException", args.Exception);
+
+    private static void OnUnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs args)
+    {
+        Services?.Logger.LogError("UnobservedTaskException", args.Exception);
+        args.SetObserved();
     }
 }
