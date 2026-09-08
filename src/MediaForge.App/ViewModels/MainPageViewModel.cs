@@ -5,11 +5,12 @@ namespace MediaForge.App.ViewModels;
 
 public sealed partial class MainPageViewModel : ObservableObject
 {
-    public MainPageViewModel(IApplicationPaths applicationPaths)
+    [ObservableProperty]
+    public partial bool IsPersistenceUnavailable { get; private set; }
+
+    public void Initialize(IApplicationPaths applicationPaths)
     {
         ArgumentNullException.ThrowIfNull(applicationPaths);
         IsPersistenceUnavailable = !applicationPaths.CanPersist;
     }
-
-    public bool IsPersistenceUnavailable { get; }
 }

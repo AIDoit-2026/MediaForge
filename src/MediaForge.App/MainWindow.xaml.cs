@@ -17,13 +17,17 @@ public sealed partial class MainWindow : Window
     {
         InitializeComponent();
 
-        AppWindow.SetIcon("Assets/AppIcon.ico");
+        ExtendsContentIntoTitleBar = true;
+        SetTitleBar(AppTitleBar);
 
+        AppWindow.SetIcon(Path.Combine(AppContext.BaseDirectory, "Assets", "AppIcon.ico"));
     }
 
     public void Initialize(IApplicationPaths applicationPaths)
     {
         ArgumentNullException.ThrowIfNull(applicationPaths);
-        RootFrame.Content = new MainPage(applicationPaths);
+        var mainPage = new MainPage();
+        mainPage.Initialize(applicationPaths);
+        RootFrame.Content = mainPage;
     }
 }

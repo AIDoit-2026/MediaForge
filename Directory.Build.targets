@@ -1,0 +1,27 @@
+<Project>
+  <!--
+    Work around WindowsAppSDK#6720 and the related XBF publish omission for
+    unpackaged WinUI projects. The Exists guards make this additive target
+    harmless when the SDK fixes its publish wiring.
+  -->
+  <Target
+    Name="AddProjectPriToResolvedFileToPublish"
+    BeforeTargets="ComputeResolvedFilesToPublishList"
+    DependsOnTargets="$(GenerateProjectPriFile)"
+    Condition="'$(UseWinUI)' == 'true' and '$(WindowsPackageType)' == 'None'">
+    <ItemGroup>
+      <ResolvedFileToPublish
+        Include="$(ProjectPriFullPath)"
+        Condition="Exists('$(ProjectPriFullPath)')">
+        <RelativePath>$(ProjectPriFileName)</RelativePath>
+        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      </ResolvedFileToPublish>
+      <ResolvedFileToPublish
+        Include="@(_GeneratedXbfFiles)"
+        Condition="Exists('%(_GeneratedXbfFiles.FullPath)')">
+        <RelativePath>$([MSBuild]::MakeRelative('$(MSBuildProjectDirectory)\$(XamlGeneratedOutputPath)', '%(_GeneratedXbfFiles.FullPath)'))</RelativePath>
+        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      </ResolvedFileToPublish>
+    </ItemGroup>
+  </Target>
+</Project>

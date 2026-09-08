@@ -9,12 +9,15 @@ public sealed partial class MainPage : Page
 {
     public MainPageViewModel ViewModel { get; }
 
-    public MainPage(IApplicationPaths applicationPaths)
+    public MainPage()
     {
-        ViewModel = new MainPageViewModel(applicationPaths);
+        ViewModel = new MainPageViewModel();
         InitializeComponent();
         ContentFrame.Navigate(typeof(ConversionPage));
     }
+
+    public void Initialize(IApplicationPaths applicationPaths) =>
+        ViewModel.Initialize(applicationPaths);
 
     private void OnNavigationSelectionChanged(
         NavigationView sender,
