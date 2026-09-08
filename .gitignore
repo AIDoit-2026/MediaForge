@@ -45,6 +45,7 @@ ffplay.exe
 
 # Local .NET CLI state used by automation
 .dotnet-cli-home/
+.nuget/
 
 # Logs, dumps, and temporary media
 *.log

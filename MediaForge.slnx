@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/MediaForge.App/MediaForge.App.csproj" />
+    <Project Path="src/MediaForge.Core/MediaForge.Core.csproj" />
+    <Project Path="src/MediaForge.Infrastructure/MediaForge.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/MediaForge.Core.Tests/MediaForge.Core.Tests.csproj" />
+    <Project Path="tests/MediaForge.IntegrationTests/MediaForge.IntegrationTests.csproj" />
+  </Folder>
+</Solution>

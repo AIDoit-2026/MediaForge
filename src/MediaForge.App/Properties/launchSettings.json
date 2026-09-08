@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "MediaForge.App (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "MediaForge.App (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
