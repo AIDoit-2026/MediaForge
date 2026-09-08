@@ -51,7 +51,7 @@
 
 ## 4. FFmpeg/FFprobe 工具层
 
-- [ ] 实现“用户指定目录 → exe 目录”的 FFmpeg/FFprobe 路径解析、同目录检查和版本读取。
+- [x] 实现“用户指定目录 → exe 目录”的 FFmpeg/FFprobe 路径解析、同目录检查和版本读取。
 - [ ] 实现能力探测并缓存 encoders、decoders、muxers、demuxers、filters、hwaccels。
 - [ ] 实现 NVIDIA NVENC、Intel QSV、AMD AMF 的实际可用性探测。
 - [ ] 定义结构化工具错误与本地化建议动作。
