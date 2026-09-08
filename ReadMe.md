@@ -22,6 +22,14 @@ MVP 需求和设计已经确定，正在按照任务清单开发：
 - Codex 分析需求，生成设计文档和任务清单。
 - 根据产品决策冻结 MVP 范围，开始搭建 WinUI 3 工程。
 
+## 本地验证
+
+在仓库根目录运行下列命令，可依次完成还原、Release 构建、Core/集成测试和 x64 portable 发布：
+
+```powershell
+.\eng\verify.ps1
+```
+
 ## 许可证
 
 MediaForge 使用 [MIT License](LICENSE) 开源。FFmpeg 是独立软件并使用自己的许可证，详见[第三方软件说明](THIRD_PARTY_NOTICES.md)。
