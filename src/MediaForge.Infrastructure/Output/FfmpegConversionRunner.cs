@@ -11,7 +11,8 @@ namespace MediaForge.Infrastructure.Output;
 /// </summary>
 public sealed class FfmpegConversionRunner(
     IFfmpegProcessRunner processRunner,
-    OutputFileCommitter outputCommitter) : IConversionRunner
+    OutputFileCommitter outputCommitter,
+    IJobManifestStore? manifestStore = null) : IConversionRunner
 {
     public async Task<ConversionExecutionResult> RunAsync(
         string ffmpegPath,
@@ -32,6 +33,10 @@ public sealed class FfmpegConversionRunner(
         FfmpegProcessResult? lastResult = null;
         try
         {
+            if (manifestStore is not null)
+            {
+                await manifestStore.SaveAsync(manifest, cancellationToken);
+            }
             foreach (var invocation in plan.Invocations)
             {
                 lastResult = await processRunner.RunAsync(ffmpegPath, invocation.Arguments, cancellationToken);
@@ -79,6 +84,13 @@ public sealed class FfmpegConversionRunner(
         {
             DeleteTemporaryArtifacts(manifest);
             throw;
+        }
+        finally
+        {
+            if (manifestStore is not null)
+            {
+                await manifestStore.DeleteAsync(manifest.JobId, CancellationToken.None);
+            }
         }
     }
 

@@ -49,15 +49,24 @@ public partial class App : Application
     /// Invoked when the application is launched.
     /// </summary>
     /// <param name="args">Details about the launch request and process.</param>
-    protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
+    protected override async void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
     {
         try
         {
             Services = ApplicationServices.Create(AppContext.BaseDirectory);
+            var cleanupResults = await Services.TemporaryOutputRecoveryService.RecoverAsync();
             Services.Logger.Log(new ApplicationLogEntry(
                 DateTimeOffset.UtcNow,
                 ApplicationLogLevel.Information,
                 "ApplicationLaunched"));
+            foreach (var cleanup in cleanupResults.Where(result => result.Deleted))
+            {
+                Services.Logger.Log(new ApplicationLogEntry(
+                    DateTimeOffset.UtcNow,
+                    ApplicationLogLevel.Information,
+                    "RecoveredTemporaryOutput",
+                    cleanup.TemporaryPath));
+            }
 
             var mainWindow = new MainWindow();
             mainWindow.Initialize(Services.ApplicationPaths);
