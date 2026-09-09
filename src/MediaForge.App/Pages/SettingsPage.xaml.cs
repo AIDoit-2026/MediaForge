@@ -11,7 +11,35 @@ public sealed partial class SettingsPage : Page
     public SettingsPage()
     {
         InitializeComponent();
+        ApplyStrings();
         Loaded += OnLoaded;
+    }
+
+    private void ApplyStrings()
+    {
+        var strings = App.Services.Localization;
+        TitleTextBlock.Text = strings.GetString("SettingsTitle.Text");
+        DescriptionTextBlock.Text = strings.GetString("SettingsDescription.Text");
+        LanguageLabel.Text = strings.GetString("LanguageLabel.Text");
+        SystemLanguageOption.Content = strings.GetString("SystemLanguageOption.Content");
+        ChineseLanguageOption.Content = strings.GetString("ChineseLanguageOption.Content");
+        EnglishLanguageOption.Content = strings.GetString("EnglishLanguageOption.Content");
+        ThemeLabel.Text = strings.GetString("ThemeLabel.Text");
+        SystemThemeOption.Content = strings.GetString("SystemThemeOption.Content");
+        LightThemeOption.Content = strings.GetString("LightThemeOption.Content");
+        DarkThemeOption.Content = strings.GetString("DarkThemeOption.Content");
+        FfmpegDirectoryLabel.Text = strings.GetString("FfmpegDirectoryLabel.Text");
+        FfmpegDirectoryTextBox.PlaceholderText = strings.GetString("FfmpegDirectoryTextBox.PlaceholderText");
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(FfmpegDirectoryTextBox, strings.GetString("FfmpegDirectoryTextBox.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name"));
+        DefaultOutputDirectoryLabel.Text = strings.GetString("DefaultOutputDirectoryLabel.Text");
+        DefaultOutputDirectoryTextBox.PlaceholderText = strings.GetString("DefaultOutputDirectoryTextBox.PlaceholderText");
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(DefaultOutputDirectoryTextBox, strings.GetString("DefaultOutputDirectoryTextBox.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name"));
+        ConflictPolicyLabel.Text = strings.GetString("ConflictPolicyLabel.Text");
+        SkipConflictOption.Content = strings.GetString("SkipConflictOption.Content");
+        OverwriteConflictOption.Content = strings.GetString("OverwriteConflictOption.Content");
+        RenameConflictOption.Content = strings.GetString("RenameConflictOption.Content");
+        MaxConcurrencyLabel.Text = strings.GetString("MaxConcurrencyLabel.Text");
+        SaveButton.Content = strings.GetString("SaveButton.Content");
     }
 
     private async void OnLoaded(object sender, RoutedEventArgs args)
@@ -29,13 +57,13 @@ public sealed partial class SettingsPage : Page
 
         if (loaded.RecoveredFromCorruption)
         {
-            ShowStatus("检测到损坏的设置文件，已备份并恢复为默认设置。", InfoBarSeverity.Warning);
+            ShowStatus(Strings("Settings.CorruptRecovered"), InfoBarSeverity.Warning);
         }
 
         if (!App.Services.ApplicationPaths.CanPersist)
         {
             SaveButton.IsEnabled = false;
-            ShowStatus("当前临时会话无法保存设置。", InfoBarSeverity.Warning);
+            ShowStatus(Strings("Settings.CannotPersist"), InfoBarSeverity.Warning);
         }
     }
 
@@ -43,7 +71,7 @@ public sealed partial class SettingsPage : Page
     {
         if (MaxConcurrencyNumberBox.Value is < 1 or > 4)
         {
-            ShowStatus("最大并行数必须在 1 到 4 之间。", InfoBarSeverity.Error);
+            ShowStatus(Strings("Settings.InvalidConcurrency"), InfoBarSeverity.Error);
             return;
         }
 
@@ -74,12 +102,5 @@ public sealed partial class SettingsPage : Page
     private static string? EmptyToNull(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
-    private static string Strings(string key) => key switch
-    {
-        "Settings.Saved" => "设置已保存。",
-        "Settings.CannotPersist" => "当前临时会话无法保存设置。",
-        "Settings.InvalidConcurrency" => "最大并行数必须在 1 到 4 之间。",
-        "Settings.CorruptRecovered" => "检测到损坏的设置文件，已备份并恢复默认设置。",
-        _ => key
-    };
+    private static string Strings(string key) => App.Services.Localization.GetString(key);
 }

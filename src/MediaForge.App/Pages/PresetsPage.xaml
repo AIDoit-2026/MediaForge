@@ -6,9 +6,9 @@
     xmlns:local="using:MediaForge.App.Pages">
 
     <StackPanel Padding="24,16,24,24" Spacing="16">
-        <TextBlock x:Uid="PresetsTitle" Style="{StaticResource TitleTextBlockStyle}" />
+        <TextBlock x:Name="TitleTextBlock" Style="{StaticResource TitleTextBlockStyle}" />
         <TextBlock
-            x:Uid="PresetsDescription"
+            x:Name="DescriptionTextBlock"
             Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
         <ListView x:Name="PresetListView" SelectionMode="None">
             <ListView.ItemTemplate>

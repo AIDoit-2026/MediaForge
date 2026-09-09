@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Xml.Linq;
 using MediaForge.Core.Configuration;
 
 namespace MediaForge.App.Services;
@@ -12,6 +13,8 @@ public sealed class LocalizationService
     public event EventHandler? Changed;
 
     public ApplicationLanguage Language { get; private set; } = ApplicationLanguage.System;
+
+    private IReadOnlyDictionary<string, string> _strings = new Dictionary<string, string>();
 
     public void Apply(ApplicationLanguage language)
     {
@@ -31,6 +34,38 @@ public sealed class LocalizationService
             : CultureInfo.GetCultureInfo(languageTag);
         CultureInfo.DefaultThreadCurrentCulture = culture;
         CultureInfo.DefaultThreadCurrentUICulture = culture;
+        _strings = LoadStrings(IsChinese(culture) ? SimplifiedChineseTag : EnglishTag);
         Changed?.Invoke(this, EventArgs.Empty);
+    }
+
+    public string GetString(string key) =>
+        _strings.TryGetValue(key, out var value) ? value : key;
+
+    private static bool IsChinese(CultureInfo culture) =>
+        culture.TwoLetterISOLanguageName.Equals("zh", StringComparison.OrdinalIgnoreCase);
+
+    private static IReadOnlyDictionary<string, string> LoadStrings(string languageTag)
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "Strings", languageTag, "Resources.resw");
+        if (!File.Exists(path))
+        {
+            return new Dictionary<string, string>();
+        }
+
+        try
+        {
+            var document = XDocument.Load(path);
+            return document.Root?.Elements("data")
+                .Where(element => element.Attribute("name")?.Value is not null)
+                .ToDictionary(
+                    element => element.Attribute("name")!.Value,
+                    element => element.Element("value")?.Value ?? string.Empty,
+                    StringComparer.Ordinal)
+                ?? new Dictionary<string, string>();
+        }
+        catch (System.Xml.XmlException)
+        {
+            return new Dictionary<string, string>();
+        }
     }
 }

@@ -7,9 +7,9 @@
 
     <ScrollViewer>
         <StackPanel Padding="24,16,24,24" Spacing="16">
-            <TextBlock x:Uid="SettingsTitle" Style="{StaticResource TitleTextBlockStyle}" />
+            <TextBlock x:Name="TitleTextBlock" Style="{StaticResource TitleTextBlockStyle}" />
             <TextBlock
-                x:Uid="SettingsDescription"
+                x:Name="DescriptionTextBlock"
                 Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
 
             <InfoBar
@@ -31,44 +31,42 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <TextBlock x:Uid="LanguageLabel" Grid.Row="0" VerticalAlignment="Center" />
+                <TextBlock x:Name="LanguageLabel" Grid.Row="0" VerticalAlignment="Center" />
                 <ComboBox x:Name="LanguageComboBox" Grid.Row="0" Grid.Column="1" SelectedIndex="0">
-                    <ComboBoxItem x:Uid="SystemLanguageOption" />
-                    <ComboBoxItem x:Uid="ChineseLanguageOption" />
-                    <ComboBoxItem Content="English" />
+                    <ComboBoxItem x:Name="SystemLanguageOption" />
+                    <ComboBoxItem x:Name="ChineseLanguageOption" />
+                    <ComboBoxItem x:Name="EnglishLanguageOption" />
                 </ComboBox>
 
-                <TextBlock x:Uid="ThemeLabel" Grid.Row="1" VerticalAlignment="Center" />
+                <TextBlock x:Name="ThemeLabel" Grid.Row="1" VerticalAlignment="Center" />
                 <ComboBox x:Name="ThemeComboBox" Grid.Row="1" Grid.Column="1" SelectedIndex="0">
-                    <ComboBoxItem x:Uid="SystemThemeOption" />
-                    <ComboBoxItem x:Uid="LightThemeOption" />
-                    <ComboBoxItem x:Uid="DarkThemeOption" />
+                    <ComboBoxItem x:Name="SystemThemeOption" />
+                    <ComboBoxItem x:Name="LightThemeOption" />
+                    <ComboBoxItem x:Name="DarkThemeOption" />
                 </ComboBox>
 
-                <TextBlock x:Uid="FfmpegDirectoryLabel" Grid.Row="2" VerticalAlignment="Center" />
+                <TextBlock x:Name="FfmpegDirectoryLabel" Grid.Row="2" VerticalAlignment="Center" />
                 <TextBox
                     x:Name="FfmpegDirectoryTextBox"
                     Grid.Row="2"
                     Grid.Column="1"
-                    automation:AutomationProperties.Name="FFmpeg 目录"
-                    x:Uid="FfmpegDirectoryTextBox" />
+                    />
 
-                <TextBlock x:Uid="DefaultOutputDirectoryLabel" Grid.Row="3" VerticalAlignment="Center" />
+                <TextBlock x:Name="DefaultOutputDirectoryLabel" Grid.Row="3" VerticalAlignment="Center" />
                 <TextBox
                     x:Name="DefaultOutputDirectoryTextBox"
                     Grid.Row="3"
                     Grid.Column="1"
-                    automation:AutomationProperties.Name="默认输出目录"
-                    x:Uid="DefaultOutputDirectoryTextBox" />
+                    />
 
-                <TextBlock x:Uid="ConflictPolicyLabel" Grid.Row="4" VerticalAlignment="Center" />
+                <TextBlock x:Name="ConflictPolicyLabel" Grid.Row="4" VerticalAlignment="Center" />
                 <ComboBox x:Name="ConflictPolicyComboBox" Grid.Row="4" Grid.Column="1" SelectedIndex="2">
-                    <ComboBoxItem x:Uid="SkipConflictOption" />
-                    <ComboBoxItem x:Uid="OverwriteConflictOption" />
-                    <ComboBoxItem x:Uid="RenameConflictOption" />
+                    <ComboBoxItem x:Name="SkipConflictOption" />
+                    <ComboBoxItem x:Name="OverwriteConflictOption" />
+                    <ComboBoxItem x:Name="RenameConflictOption" />
                 </ComboBox>
 
-                <TextBlock x:Uid="MaxConcurrencyLabel" Grid.Row="5" VerticalAlignment="Center" />
+                <TextBlock x:Name="MaxConcurrencyLabel" Grid.Row="5" VerticalAlignment="Center" />
                 <NumberBox
                     x:Name="MaxConcurrencyNumberBox"
                     Grid.Row="5"
@@ -84,7 +82,7 @@
                 x:Name="SaveButton"
                 HorizontalAlignment="Left"
                 Click="OnSaveClick"
-                x:Uid="SaveButton" />
+                 />
         </StackPanel>
     </ScrollViewer>
 </Page>

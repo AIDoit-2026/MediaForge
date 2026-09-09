@@ -6,15 +6,15 @@
     DefaultButton="Primary"
     PrimaryButtonClick="OnPrimaryButtonClick">
     <StackPanel Spacing="12">
-        <TextBox x:Name="DirectoryTextBox" Header="Folder" PlaceholderText="Choose a folder to scan" />
-        <CheckBox x:Name="RecursiveCheckBox" Content="Include subfolders" />
-        <ComboBox x:Name="FilterModeComboBox" Header="Filter" SelectionChanged="OnFilterModeChanged">
-            <ComboBoxItem Content="All files" Tag="0" />
-            <ComboBoxItem Content="Keyword" Tag="1" />
-            <ComboBoxItem Content="Wildcard (* and ?)" Tag="2" />
-            <ComboBoxItem Content="Regular expression" Tag="3" />
+        <TextBox x:Name="DirectoryTextBox" />
+        <CheckBox x:Name="RecursiveCheckBox" />
+        <ComboBox x:Name="FilterModeComboBox" SelectionChanged="OnFilterModeChanged">
+            <ComboBoxItem x:Name="AllFilesOption" Tag="0" />
+            <ComboBoxItem x:Name="KeywordOption" Tag="1" />
+            <ComboBoxItem x:Name="WildcardOption" Tag="2" />
+            <ComboBoxItem x:Name="RegularExpressionOption" Tag="3" />
         </ComboBox>
-        <TextBox x:Name="ExpressionTextBox" Header="Expression" />
+        <TextBox x:Name="ExpressionTextBox" />
         <InfoBar x:Name="ValidationInfoBar" IsOpen="False" IsClosable="False" Severity="Error" />
     </StackPanel>
 </ContentDialog>

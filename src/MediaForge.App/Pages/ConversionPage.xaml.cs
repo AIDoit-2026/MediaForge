@@ -17,7 +17,22 @@ public sealed partial class ConversionPage : Page
     public ConversionPage()
     {
         InitializeComponent();
+        ApplyStrings();
         MediaListView.ItemsSource = _media;
+    }
+
+    private void ApplyStrings()
+    {
+        var strings = App.Services.Localization;
+        TitleTextBlock.Text = strings.GetString("Conversion.Title");
+        AddFilesButton.Label = strings.GetString("Conversion.AddFiles");
+        AddFilesButton.SetValue(Microsoft.UI.Xaml.Automation.AutomationProperties.NameProperty, AddFilesButton.Label);
+        AddFolderButton.Label = strings.GetString("Conversion.AddFolder");
+        AddFolderButton.SetValue(Microsoft.UI.Xaml.Automation.AutomationProperties.NameProperty, AddFolderButton.Label);
+        StartButton.Label = strings.GetString("Conversion.Start");
+        ClearButton.Label = strings.GetString("Conversion.Clear");
+        EmptyTitleTextBlock.Text = strings.GetString("Conversion.EmptyTitle");
+        EmptyDescriptionTextBlock.Text = strings.GetString("Conversion.EmptyDescription");
     }
 
     private async void OnAddFilesClick(object sender, RoutedEventArgs args)
@@ -43,7 +58,7 @@ public sealed partial class ConversionPage : Page
             var resolution = App.Services.FfmpegToolResolver.Resolve(settings.FfmpegDirectory);
             if (!resolution.IsSuccess)
             {
-                AddError(import.Directory!, "FFmpeg or FFprobe was not found.");
+                AddError(import.Directory!, App.Services.Localization.GetString("Conversion.ToolsNotFound"));
                 return;
             }
 
@@ -89,7 +104,7 @@ public sealed partial class ConversionPage : Page
         var resolution = App.Services.FfmpegToolResolver.Resolve(settings.FfmpegDirectory);
         if (!resolution.IsSuccess)
         {
-            foreach (var file in files) AddError(file.Path, "FFmpeg or FFprobe was not found.");
+            foreach (var file in files) AddError(file.Path, App.Services.Localization.GetString("Conversion.ToolsNotFound"));
             return;
         }
 
@@ -115,7 +130,7 @@ public sealed record ImportedMediaRow(string Path, string FileName, string Summa
 {
     public static ImportedMediaRow Create(string path, MediaForge.Core.Media.MediaSourceInfo? media, string? error)
     {
-        var summary = error ?? (media is null ? "Unsupported file" : Format(media));
+        var summary = error ?? (media is null ? App.Services.Localization.GetString("Conversion.UnsupportedFile") : Format(media));
         return new ImportedMediaRow(path, System.IO.Path.GetFileName(path), summary);
     }
 
@@ -123,7 +138,7 @@ public sealed record ImportedMediaRow(string Path, string FileName, string Summa
     {
         var video = media.Streams.FirstOrDefault(stream => stream.Type == MediaForge.Core.Media.MediaStreamType.Video);
         var audio = media.Streams.FirstOrDefault(stream => stream.Type == MediaForge.Core.Media.MediaStreamType.Audio);
-        var duration = media.Duration?.ToString("g") ?? "Unknown duration";
+        var duration = media.Duration?.ToString("g") ?? App.Services.Localization.GetString("Conversion.UnknownDuration");
         var resolution = video?.Width is not null && video.Height is not null ? $"{video.Width}×{video.Height}" : null;
         return string.Join(" · ", new[] { duration, resolution, video?.Codec, video?.FrameRate, audio?.Codec, media.BitRate is null ? null : $"{media.BitRate / 1000} kb/s" }.Where(value => !string.IsNullOrWhiteSpace(value)));
     }

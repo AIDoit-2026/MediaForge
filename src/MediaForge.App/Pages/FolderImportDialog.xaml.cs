@@ -10,9 +10,7 @@ public sealed partial class FolderImportDialog : ContentDialog
     public FolderImportDialog(FolderImportSettings settings)
     {
         InitializeComponent();
-        Title = "Import folder";
-        PrimaryButtonText = "Import";
-        CloseButtonText = "Cancel";
+        ApplyStrings();
         DirectoryTextBox.Text = settings.Directory ?? string.Empty;
         RecursiveCheckBox.IsChecked = settings.IncludeSubdirectories;
         FilterModeComboBox.SelectedIndex = (int)settings.FilterMode;
@@ -21,6 +19,23 @@ public sealed partial class FolderImportDialog : ContentDialog
     }
 
     public FolderImportSettings? Result { get; private set; }
+
+    private void ApplyStrings()
+    {
+        var strings = App.Services.Localization;
+        Title = strings.GetString("FolderImport.Title");
+        PrimaryButtonText = strings.GetString("FolderImport.Import");
+        CloseButtonText = strings.GetString("FolderImport.Cancel");
+        DirectoryTextBox.Header = strings.GetString("FolderImport.Folder");
+        DirectoryTextBox.PlaceholderText = strings.GetString("FolderImport.FolderPlaceholder");
+        RecursiveCheckBox.Content = strings.GetString("FolderImport.Recursive");
+        FilterModeComboBox.Header = strings.GetString("FolderImport.Filter");
+        AllFilesOption.Content = strings.GetString("FolderImport.AllFiles");
+        KeywordOption.Content = strings.GetString("FolderImport.Keyword");
+        WildcardOption.Content = strings.GetString("FolderImport.Wildcard");
+        RegularExpressionOption.Content = strings.GetString("FolderImport.RegularExpression");
+        ExpressionTextBox.Header = strings.GetString("FolderImport.Expression");
+    }
 
     private void OnFilterModeChanged(object sender, SelectionChangedEventArgs args) => UpdateExpressionState();
 
@@ -35,7 +50,7 @@ public sealed partial class FolderImportDialog : ContentDialog
         if (!Directory.Exists(directory))
         {
             args.Cancel = true;
-            ShowError("Choose an existing folder.");
+            ShowError(App.Services.Localization.GetString("FolderImport.DirectoryRequired"));
             return;
         }
 

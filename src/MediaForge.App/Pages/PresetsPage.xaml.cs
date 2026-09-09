@@ -8,6 +8,8 @@ public sealed partial class PresetsPage : Page
     public PresetsPage()
     {
         InitializeComponent();
+        TitleTextBlock.Text = App.Services.Localization.GetString("PresetsTitle.Text");
+        DescriptionTextBlock.Text = App.Services.Localization.GetString("PresetsDescription.Text");
         PresetListView.ItemsSource = BuiltInPresetCatalog.All
             .Select(preset => new PresetItem(
                 preset.Name,
@@ -19,8 +21,8 @@ public sealed partial class PresetsPage : Page
         string.Join(
             " · ",
             parameters.OutputContainer.ToUpperInvariant(),
-            parameters.Values.TryGetValue("videoEncoder", out var videoEncoder) ? videoEncoder : "无视频",
-            parameters.Values.TryGetValue("audioEncoder", out var audioEncoder) ? audioEncoder : "无音频");
+            parameters.Values.TryGetValue("videoEncoder", out var videoEncoder) ? videoEncoder : App.Services.Localization.GetString("Preset.NoVideo"),
+            parameters.Values.TryGetValue("audioEncoder", out var audioEncoder) ? audioEncoder : App.Services.Localization.GetString("Preset.NoAudio"));
 }
 
 public sealed record PresetItem(string Name, string Description);
