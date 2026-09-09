@@ -1,0 +1,170 @@
+namespace MediaForge.Core.Jobs;
+
+/// <summary>
+/// Starts queued jobs up to a user-selected limit. Changing the limit never preempts jobs already running;
+/// it only changes how many future jobs may start.
+/// </summary>
+public sealed class ConversionQueueScheduler : IConversionQueueScheduler
+{
+    private readonly object _gate = new();
+    private readonly ConversionQueueService _queue;
+    private readonly Func<ConversionJobSnapshot, CancellationToken, Task> _executeAsync;
+    private readonly HashSet<Guid> _runningJobIds = [];
+    private TaskCompletionSource _idleCompletion = CompletedSource();
+    private bool _pumpActive;
+    private bool _schedulingEnabled;
+    private int _maximumConcurrency;
+
+    public ConversionQueueScheduler(
+        ConversionQueueService queue,
+        Func<ConversionJobSnapshot, CancellationToken, Task> executeAsync,
+        int maximumConcurrency = 1)
+    {
+        ArgumentNullException.ThrowIfNull(queue);
+        ArgumentNullException.ThrowIfNull(executeAsync);
+        ValidateConcurrency(maximumConcurrency);
+        _queue = queue;
+        _executeAsync = executeAsync;
+        _maximumConcurrency = maximumConcurrency;
+    }
+
+    public int MaximumConcurrency
+    {
+        get { lock (_gate) return _maximumConcurrency; }
+    }
+
+    public void SetMaximumConcurrency(int maximumConcurrency)
+    {
+        ValidateConcurrency(maximumConcurrency);
+        lock (_gate)
+        {
+            _maximumConcurrency = maximumConcurrency;
+        }
+        RequestPump();
+    }
+
+    public Task StartQueuedJobsAsync()
+    {
+        Task idleTask;
+        lock (_gate)
+        {
+            _schedulingEnabled = true;
+            if (_idleCompletion.Task.IsCompleted)
+            {
+                _idleCompletion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            }
+            idleTask = _idleCompletion.Task;
+        }
+        RequestPump();
+        return idleTask;
+    }
+
+    private void RequestPump()
+    {
+        lock (_gate)
+        {
+            if (!_schedulingEnabled || _pumpActive)
+            {
+                return;
+            }
+            _pumpActive = true;
+        }
+        _ = Task.Run(PumpAsync);
+    }
+
+    private async Task PumpAsync()
+    {
+        try
+        {
+            while (true)
+            {
+                List<ConversionJobSnapshot> jobsToStart;
+                lock (_gate)
+                {
+                    var availableSlots = _maximumConcurrency - _runningJobIds.Count;
+                    if (availableSlots <= 0)
+                    {
+                        break;
+                    }
+
+                    jobsToStart = _queue.GetSnapshot().Jobs
+                        .Where(job => job.Status == ConversionJobStatus.Queued && !_runningJobIds.Contains(job.Id))
+                        .Take(availableSlots)
+                        .ToList();
+                    foreach (var job in jobsToStart)
+                    {
+                        _runningJobIds.Add(job.Id);
+                    }
+                }
+
+                if (jobsToStart.Count == 0)
+                {
+                    break;
+                }
+
+                foreach (var job in jobsToStart)
+                {
+                    _queue.Start(job.Id);
+                    _ = Task.Run(() => ExecuteOneAsync(job));
+                }
+            }
+        }
+        finally
+        {
+            bool shouldPumpAgain;
+            lock (_gate)
+            {
+                _pumpActive = false;
+                shouldPumpAgain = _schedulingEnabled && _runningJobIds.Count < _maximumConcurrency &&
+                    _queue.GetSnapshot().Jobs.Any(job => job.Status == ConversionJobStatus.Queued);
+                if (!shouldPumpAgain && _runningJobIds.Count == 0 &&
+                    !_queue.GetSnapshot().Jobs.Any(job => job.Status == ConversionJobStatus.Queued))
+                {
+                    _idleCompletion.TrySetResult();
+                }
+            }
+            if (shouldPumpAgain)
+            {
+                RequestPump();
+            }
+        }
+
+        await Task.CompletedTask;
+    }
+
+    private async Task ExecuteOneAsync(ConversionJobSnapshot job)
+    {
+        try
+        {
+            await _executeAsync(job, CancellationToken.None);
+            _queue.Complete(job.Id);
+        }
+        catch (Exception)
+        {
+            _queue.Fail(job.Id);
+        }
+        finally
+        {
+            lock (_gate)
+            {
+                _runningJobIds.Remove(job.Id);
+            }
+            RequestPump();
+        }
+    }
+
+    private static void ValidateConcurrency(int maximumConcurrency)
+    {
+        if (maximumConcurrency is < 1 or > 4)
+        {
+            throw new ArgumentOutOfRangeException(nameof(maximumConcurrency), "The concurrent conversion limit must be between 1 and 4.");
+        }
+    }
+
+    private static TaskCompletionSource CompletedSource()
+    {
+        var source = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        source.SetResult();
+        return source;
+    }
+}
