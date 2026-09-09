@@ -42,6 +42,7 @@ config/
 ffmpeg.exe
 ffprobe.exe
 ffplay.exe
+/ffmpeg/
 
 # Local .NET CLI state used by automation
 .dotnet-cli-home/
