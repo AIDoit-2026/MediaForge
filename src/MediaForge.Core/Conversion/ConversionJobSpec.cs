@@ -11,7 +11,11 @@ public sealed record ConversionJobSpec(
     string OutputPath,
     string TemporaryOutputPath,
     ConversionProfile Profile,
-    DateTimeOffset CreatedAt)
+    DateTimeOffset CreatedAt,
+    Guid JobId = default,
+    Guid? PresetId = null,
+    int? PresetSchemaVersion = null,
+    string? FfmpegVersion = null)
 {
     public string TwoPassLogFilePrefix => TemporaryOutputPath + ".passlog";
 }

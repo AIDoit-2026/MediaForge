@@ -104,6 +104,25 @@ public sealed class FfmpegCommandBuilderTests
         Assert.Contains("subtitles=filename='C\\:\\\\字幕 files\\\\a\\:b.srt'", arguments);
     }
 
+    [Fact]
+    public void Plan_includes_a_manifest_with_exact_paths_snapshot_and_execution_arguments()
+    {
+        var jobId = Guid.NewGuid();
+        var profile = ConversionProfile.CreateDefault();
+        var job = Job(profile) with { JobId = jobId, PresetId = Guid.NewGuid(), PresetSchemaVersion = 1, FfmpegVersion = "7.1" };
+
+        var plan = new FfmpegCommandBuilder().Build(job);
+
+        Assert.Equal(JobManifest.CurrentSchemaVersion, plan.Manifest.SchemaVersion);
+        Assert.Equal(jobId, plan.Manifest.JobId);
+        Assert.Equal("input path.mp4", plan.Manifest.InputPath);
+        Assert.Equal("final output.mp4", plan.Manifest.OutputPath);
+        Assert.Equal("temporary output.mp4", plan.Manifest.TemporaryOutputPath);
+        Assert.Equal(profile, plan.Manifest.Profile);
+        Assert.Equal("7.1", plan.Manifest.FfmpegVersion);
+        Assert.Equal(plan.FinalInvocation.Arguments, plan.Manifest.InvocationArguments[^1]);
+    }
+
     private static ConversionJobSpec Job(ConversionProfile profile) => new(
         new MediaSourceInfo("input path.mp4", "mp4", TimeSpan.FromMinutes(1), null, null, []),
         "final output.mp4", "temporary output.mp4", profile, DateTimeOffset.Parse("2026-09-09T00:00:00Z"));

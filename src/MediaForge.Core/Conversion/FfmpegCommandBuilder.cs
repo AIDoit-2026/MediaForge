@@ -9,9 +9,10 @@ public sealed class FfmpegCommandBuilder : ICommandBuilder
         ArgumentNullException.ThrowIfNull(job);
         ValidateJobPaths(job);
 
-        return job.Profile.Video.TwoPass
-            ? new FfmpegCommandPlan([CreatePassOneInvocation(job), CreateFinalInvocation(job, pass: 2)])
-            : new FfmpegCommandPlan([CreateFinalInvocation(job, pass: null)]);
+        IReadOnlyList<FfmpegInvocation> invocations = job.Profile.Video.TwoPass
+            ? [CreatePassOneInvocation(job), CreateFinalInvocation(job, pass: 2)]
+            : [CreateFinalInvocation(job, pass: null)];
+        return new FfmpegCommandPlan(invocations, JobManifest.Create(job, invocations));
     }
 
     private static FfmpegInvocation CreatePassOneInvocation(ConversionJobSpec job)
