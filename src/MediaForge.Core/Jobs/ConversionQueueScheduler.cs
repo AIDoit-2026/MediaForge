@@ -10,6 +10,8 @@ public sealed class ConversionQueueScheduler : IConversionQueueScheduler
     private readonly ConversionQueueService _queue;
     private readonly Func<ConversionJobSnapshot, CancellationToken, Task> _executeAsync;
     private readonly HashSet<Guid> _runningJobIds = [];
+    private readonly Dictionary<Guid, TaskCompletionSource> _runningCompletions = [];
+    private readonly CancellationTokenSource _shutdownCancellation = new();
     private TaskCompletionSource _idleCompletion = CompletedSource();
     private bool _pumpActive;
     private bool _schedulingEnabled;
@@ -48,6 +50,10 @@ public sealed class ConversionQueueScheduler : IConversionQueueScheduler
         Task idleTask;
         lock (_gate)
         {
+            if (_shutdownCancellation.IsCancellationRequested)
+            {
+                throw new InvalidOperationException("A stopped queue scheduler cannot be restarted.");
+            }
             _schedulingEnabled = true;
             if (_idleCompletion.Task.IsCompleted)
             {
@@ -57,6 +63,19 @@ public sealed class ConversionQueueScheduler : IConversionQueueScheduler
         }
         RequestPump();
         return idleTask;
+    }
+
+    public async Task StopAsync()
+    {
+        Task[] runningTasks;
+        lock (_gate)
+        {
+            _schedulingEnabled = false;
+            _shutdownCancellation.Cancel();
+            runningTasks = _runningCompletions.Values.Select(completion => completion.Task).ToArray();
+        }
+
+        await Task.WhenAll(runningTasks).ConfigureAwait(false);
     }
 
     private void RequestPump()
@@ -105,7 +124,12 @@ public sealed class ConversionQueueScheduler : IConversionQueueScheduler
                 foreach (var job in jobsToStart)
                 {
                     _queue.Start(job.Id);
-                    _ = Task.Run(() => ExecuteOneAsync(job));
+                    var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+                    lock (_gate)
+                    {
+                        _runningCompletions.Add(job.Id, completion);
+                    }
+                    _ = Task.Run(() => ExecuteOneAsync(job, completion));
                 }
             }
         }
@@ -132,12 +156,16 @@ public sealed class ConversionQueueScheduler : IConversionQueueScheduler
         await Task.CompletedTask;
     }
 
-    private async Task ExecuteOneAsync(ConversionJobSnapshot job)
+    private async Task ExecuteOneAsync(ConversionJobSnapshot job, TaskCompletionSource completion)
     {
         try
         {
-            await _executeAsync(job, CancellationToken.None);
+            await _executeAsync(job, _shutdownCancellation.Token);
             _queue.Complete(job.Id);
+        }
+        catch (OperationCanceledException) when (_shutdownCancellation.IsCancellationRequested)
+        {
+            _queue.Interrupt(job.Id);
         }
         catch (Exception)
         {
@@ -148,7 +176,9 @@ public sealed class ConversionQueueScheduler : IConversionQueueScheduler
             lock (_gate)
             {
                 _runningJobIds.Remove(job.Id);
+                _runningCompletions.Remove(job.Id);
             }
+            completion.TrySetResult();
             RequestPump();
         }
     }

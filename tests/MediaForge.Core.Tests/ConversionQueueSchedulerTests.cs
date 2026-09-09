@@ -84,6 +84,28 @@ public sealed class ConversionQueueSchedulerTests
         Assert.Equal([ConversionJobStatus.Failed, ConversionJobStatus.Succeeded], queue.GetSnapshot().Jobs.Select(job => job.Status));
     }
 
+    [Fact]
+    public async Task Stop_cancels_running_work_marks_it_interrupted_and_does_not_start_more_jobs()
+    {
+        var queue = CreateQueuedJobs(2);
+        var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var scheduler = new ConversionQueueScheduler(queue, async (_, cancellationToken) =>
+        {
+            started.TrySetResult();
+            await Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken);
+        });
+
+        var drain = scheduler.StartQueuedJobsAsync();
+        await started.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        await scheduler.StopAsync().WaitAsync(TimeSpan.FromSeconds(2));
+
+        var statuses = queue.GetSnapshot().Jobs.Select(job => job.Status).ToArray();
+        Assert.Equal(ConversionJobStatus.Interrupted, statuses[0]);
+        Assert.Equal(ConversionJobStatus.Queued, statuses[1]);
+        await Assert.ThrowsAsync<InvalidOperationException>(() => scheduler.StartQueuedJobsAsync());
+        Assert.False(drain.IsCompleted);
+    }
+
     private static ConversionQueueService CreateQueuedJobs(int count)
     {
         var queue = new ConversionQueueService();

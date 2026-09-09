@@ -48,6 +48,8 @@ public sealed class ConversionJob
 
     public void Fail() => TransitionTo(ConversionJobStatus.Failed, ConversionJobStatus.Running);
 
+    public void Interrupt() => TransitionTo(ConversionJobStatus.Interrupted, ConversionJobStatus.Running);
+
     public void RestoreAfterApplicationStart()
     {
         if (Status == ConversionJobStatus.Running)

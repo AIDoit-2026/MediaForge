@@ -96,6 +96,8 @@ public sealed class ConversionQueueService
 
     public void Fail(Guid jobId) => Transition(jobId, job => job.Fail());
 
+    public void Interrupt(Guid jobId) => Transition(jobId, job => job.Interrupt());
+
     public void Retry(Guid jobId) => Transition(jobId, job =>
     {
         if (job.Status is not (ConversionJobStatus.Failed or ConversionJobStatus.Interrupted))

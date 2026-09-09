@@ -7,4 +7,6 @@ public interface IConversionQueueScheduler
     void SetMaximumConcurrency(int maximumConcurrency);
 
     Task StartQueuedJobsAsync();
+
+    Task StopAsync();
 }
