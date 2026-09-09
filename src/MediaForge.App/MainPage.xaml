@@ -27,7 +27,9 @@
             AlwaysShowHeader="False"
             IsBackButtonVisible="Collapsed"
             IsSettingsVisible="True"
-            PaneDisplayMode="LeftCompact"
+            PaneDisplayMode="Auto"
+            CompactModeThresholdWidth="900"
+            ExpandedModeThresholdWidth="1200"
             SelectionChanged="OnNavigationSelectionChanged">
             <NavigationView.MenuItems>
                 <NavigationViewItem x:Name="ConversionNavigationItem" IsSelected="True" Tag="conversion">
