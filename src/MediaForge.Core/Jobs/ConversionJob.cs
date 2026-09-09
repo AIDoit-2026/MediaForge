@@ -1,17 +1,30 @@
+using MediaForge.Core.Configuration;
+
 namespace MediaForge.Core.Jobs;
 
 public sealed class ConversionJob
 {
-    public ConversionJob(Guid id, string inputPath, string outputPath, ConversionJobStatus status)
+    public ConversionJob(
+        Guid id,
+        string inputPath,
+        string outputPath,
+        ConversionJobStatus status,
+        ConversionParameterSnapshot parameters)
     {
+        ArgumentOutOfRangeException.ThrowIfEqual(id, Guid.Empty);
         ArgumentException.ThrowIfNullOrWhiteSpace(inputPath);
         ArgumentException.ThrowIfNullOrWhiteSpace(outputPath);
+        ArgumentNullException.ThrowIfNull(parameters);
 
         Id = id;
         InputPath = inputPath;
         OutputPath = outputPath;
         Status = status;
+        Parameters = parameters;
     }
+
+    public ConversionJob(Guid id, string inputPath, string outputPath, ConversionJobStatus status)
+        : this(id, inputPath, outputPath, status, ConversionParameterSnapshot.CreateDefault()) { }
 
     public Guid Id { get; }
 
@@ -20,6 +33,8 @@ public sealed class ConversionJob
     public string OutputPath { get; }
 
     public ConversionJobStatus Status { get; private set; }
+
+    public ConversionParameterSnapshot Parameters { get; }
 
     public void Queue() => TransitionTo(
         ConversionJobStatus.Queued,
