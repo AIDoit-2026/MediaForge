@@ -26,7 +26,7 @@ public sealed class FfmpegProcessRunnerTests
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => runner.RunAsync(
             Path.Combine(Environment.SystemDirectory, "cmd.exe"),
-            ["/d", "/c", "timeout /t 10 /nobreak >nul"],
+            ["/d", "/c", "ping -n 10 127.0.0.1 >nul"],
             cancellationSource.Token));
     }
 }
