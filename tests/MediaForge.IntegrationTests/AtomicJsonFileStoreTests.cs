@@ -1,4 +1,5 @@
 using MediaForge.Core.Configuration;
+using MediaForge.Core.Importing;
 using MediaForge.Infrastructure.Configuration;
 
 namespace MediaForge.IntegrationTests;
@@ -64,7 +65,12 @@ public sealed class AtomicJsonFileStoreTests : IDisposable
             FfmpegDirectory = "C:\\Tools\\ffmpeg",
             DefaultOutputDirectory = "D:\\Converted",
             OutputConflictPolicy = OutputConflictPolicy.Skip,
-            MaxConcurrentJobs = 3
+            MaxConcurrentJobs = 3,
+            LastFolderImport = new FolderImportSettings(
+                "D:\\Media",
+                IncludeSubdirectories: false,
+                FilterMode: FileNameFilterMode.Wildcard,
+                FilterExpression: "*.mp4")
         };
 
         await store.SaveAsync(expected);
