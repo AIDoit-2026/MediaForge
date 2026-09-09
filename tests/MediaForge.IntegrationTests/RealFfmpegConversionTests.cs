@@ -22,7 +22,9 @@ public sealed class RealFfmpegConversionTests : IDisposable
         var process = new FfmpegProcessRunner();
         var toolset = new FfmpegToolset(toolDirectory, ffmpegPath, ffprobePath, FfmpegToolSource.ApplicationDirectory);
         var probe = new FfprobeMediaProbeService(toolset, process);
-        var inputPath = Path.Combine(_root, "generated-input.mp4");
+        var sampleDirectory = Path.Combine(_root, "媒体 sample 空格");
+        Directory.CreateDirectory(sampleDirectory);
+        var inputPath = Path.Combine(sampleDirectory, "生成 输入.mp4");
 
         var generated = await process.RunAsync(ffmpegPath,
         [

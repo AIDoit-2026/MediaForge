@@ -28,4 +28,16 @@ public sealed class FfprobeOutputParserTests
             subtitle => Assert.Equal(MediaStreamType.Subtitle, subtitle.Type),
             cover => Assert.True(cover.IsAttachedPicture));
     }
+
+    [Fact]
+    public void Parse_keeps_duration_unknown_when_ffprobe_does_not_report_it()
+    {
+        var source = FfprobeOutputParser.Parse("unknown-duration.ts", """
+            {"format":{"format_name":"mpegts"},"streams":[{"index":0,"codec_type":"video","codec_name":"h264"}]}
+            """);
+
+        Assert.Null(source.Duration);
+        Assert.Equal("mpegts", source.Container);
+        Assert.Single(source.Streams);
+    }
 }
