@@ -24,7 +24,16 @@ public sealed class LocalizationService
             _ => string.Empty
         };
 
-        ApplicationLanguages.PrimaryLanguageOverride = languageTag;
+        // This WinRT setter requires package identity on some Windows versions. The app is
+        // intentionally unpackaged, so it is only a best-effort bridge for the XAML resource
+        // system; culture formatting below remains available in every portable deployment.
+        try
+        {
+            ApplicationLanguages.PrimaryLanguageOverride = languageTag;
+        }
+        catch (InvalidOperationException)
+        {
+        }
         var culture = string.IsNullOrEmpty(languageTag)
             ? CultureInfo.CurrentUICulture
             : CultureInfo.GetCultureInfo(languageTag);

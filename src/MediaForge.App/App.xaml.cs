@@ -87,7 +87,7 @@ public partial class App : Application
         }
         catch (Exception error)
         {
-            Services?.Logger.LogError("ApplicationLaunchFailed", error);
+            Services?.Logger.LogError("ApplicationLaunchFailed", error, error.ToString());
             throw;
         }
     }
