@@ -4,7 +4,7 @@ namespace MediaForge.Infrastructure.Ffmpeg;
 
 public sealed class FfmpegToolResolver : IFfmpegToolResolver
 {
-    public const string ToolsNotFound = nameof(ToolsNotFound);
+    public const string ToolsNotFound = FfmpegToolErrorCodes.ToolsNotFound;
 
     private readonly string _applicationDirectory;
 
