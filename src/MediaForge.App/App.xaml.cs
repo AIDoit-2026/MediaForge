@@ -49,18 +49,29 @@ public partial class App : Application
     /// Invoked when the application is launched.
     /// </summary>
     /// <param name="args">Details about the launch request and process.</param>
-    protected override async void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
+    protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
     {
         try
         {
             Services = ApplicationServices.Create(AppContext.BaseDirectory);
-            if (!Services.SingleInstance.OwnsInstance)
-            {
-                Services.SingleInstance.SignalExistingInstance();
-                Services.Dispose();
-                Environment.Exit(0);
-                return;
-            }
+            var mainWindow = new MainWindow();
+            Window = mainWindow;
+            DispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread();
+            Window.Activate();
+
+            _ = InitializeWindowAsync(mainWindow);
+        }
+        catch (Exception error)
+        {
+            Services?.Logger.LogError("ApplicationLaunchFailed", error, error.ToString());
+            throw;
+        }
+    }
+
+    private static async Task InitializeWindowAsync(MainWindow mainWindow)
+    {
+        try
+        {
             var settings = await Services.SettingsStore.LoadAsync();
             Services.Localization.Apply(settings.Settings.Language);
             var cleanupResults = await Services.TemporaryOutputRecoveryService.RecoverAsync();
@@ -77,20 +88,16 @@ public partial class App : Application
                     cleanup.TemporaryPath));
             }
 
-            var mainWindow = new MainWindow();
             mainWindow.Initialize(Services.ApplicationPaths);
-            Window = mainWindow;
-            DispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread();
             Services.Theme.Apply(settings.Settings.Theme, mainWindow.Content as FrameworkElement);
-            Services.SingleInstance.ListenForActivation(DispatcherQueue, Window.Activate);
-            Window.Activate();
         }
         catch (Exception error)
         {
-            Services?.Logger.LogError("ApplicationLaunchFailed", error, error.ToString());
-            throw;
+            Services.Logger.LogError("ApplicationInitializationFailed", error, error.ToString());
+            mainWindow.ShowStartupError(error.Message);
         }
     }
+
 
     private static void OnUnhandledException(
         object sender,

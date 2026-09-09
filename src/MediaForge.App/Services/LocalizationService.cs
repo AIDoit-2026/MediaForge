@@ -1,6 +1,5 @@
 using System.Globalization;
 using MediaForge.Core.Configuration;
-using Windows.Globalization;
 
 namespace MediaForge.App.Services;
 
@@ -24,16 +23,9 @@ public sealed class LocalizationService
             _ => string.Empty
         };
 
-        // This WinRT setter requires package identity on some Windows versions. The app is
-        // intentionally unpackaged, so it is only a best-effort bridge for the XAML resource
-        // system; culture formatting below remains available in every portable deployment.
-        try
-        {
-            ApplicationLanguages.PrimaryLanguageOverride = languageTag;
-        }
-        catch (InvalidOperationException)
-        {
-        }
+        // ApplicationLanguages.PrimaryLanguageOverride is package-identity dependent and can
+        // block indefinitely for an unpackaged process. Use managed culture settings here;
+        // portable resource selection is handled independently by the application shell.
         var culture = string.IsNullOrEmpty(languageTag)
             ? CultureInfo.CurrentUICulture
             : CultureInfo.GetCultureInfo(languageTag);

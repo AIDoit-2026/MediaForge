@@ -74,6 +74,12 @@ public sealed partial class SettingsPage : Page
     private static string? EmptyToNull(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
-    private static string Strings(string key) =>
-        Windows.ApplicationModel.Resources.ResourceLoader.GetForViewIndependentUse().GetString(key);
+    private static string Strings(string key) => key switch
+    {
+        "Settings.Saved" => "设置已保存。",
+        "Settings.CannotPersist" => "当前临时会话无法保存设置。",
+        "Settings.InvalidConcurrency" => "最大并行数必须在 1 到 4 之间。",
+        "Settings.CorruptRecovered" => "检测到损坏的设置文件，已备份并恢复默认设置。",
+        _ => key
+    };
 }

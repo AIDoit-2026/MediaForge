@@ -46,6 +46,16 @@ public sealed partial class MainWindow : Window
         App.Services.Theme.Apply(App.Services.Theme.Theme, Content as FrameworkElement);
     }
 
+    public void ShowStartupError(string message)
+    {
+        RootFrame.Content = new Microsoft.UI.Xaml.Controls.TextBlock
+        {
+            Margin = new Thickness(24),
+            Text = $"MediaForge could not finish loading.\n\n{message}\n\nSee config\\logs\\application.ndjson for details.",
+            TextWrapping = TextWrapping.Wrap
+        };
+    }
+
     private void OnAppWindowChanged(Microsoft.UI.Windowing.AppWindow sender, Microsoft.UI.Windowing.AppWindowChangedEventArgs args)
     {
         if (!args.DidSizeChange || _enforcingMinimumSize) return;

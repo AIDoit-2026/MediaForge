@@ -26,14 +26,13 @@ public sealed partial class MainPage : Page
 
     private void ApplyStrings()
     {
-        var strings = Windows.ApplicationModel.Resources.ResourceLoader.GetForViewIndependentUse();
-        TemporarySessionInfoBar.Title = strings.GetString("TemporarySession.Title");
-        TemporarySessionInfoBar.Message = strings.GetString("TemporarySession.Message");
-        ConversionNavigationItem.Content = strings.GetString("Navigation.Conversion");
-        PresetsNavigationItem.Content = strings.GetString("Navigation.Presets");
+        TemporarySessionInfoBar.Title = "当前为临时会话";
+        TemporarySessionInfoBar.Message = "无法写入 config 文件夹。本次将使用默认参数，设置、队列和日志不会保存。";
+        ConversionNavigationItem.Content = "转换";
+        PresetsNavigationItem.Content = "预设";
         if (RootNavigation.SettingsItem is NavigationViewItem settingsItem)
         {
-            settingsItem.Content = strings.GetString("Navigation.Settings");
+            settingsItem.Content = "设置";
         }
     }
 
