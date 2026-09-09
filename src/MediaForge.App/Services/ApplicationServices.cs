@@ -26,7 +26,8 @@ public sealed class ApplicationServices : IDisposable
         IHardwareEncoderProbe hardwareEncoderProbe,
         IFfmpegProcessRunner ffmpegProcessRunner,
         LocalizationService localization,
-        ThemeService theme)
+        ThemeService theme,
+        SingleInstanceService singleInstance)
     {
         ApplicationPaths = applicationPaths;
         Logger = logger;
@@ -43,6 +44,7 @@ public sealed class ApplicationServices : IDisposable
         FfmpegProcessRunner = ffmpegProcessRunner;
         Localization = localization;
         Theme = theme;
+        SingleInstance = singleInstance;
     }
 
     public IApplicationPaths ApplicationPaths { get; }
@@ -75,6 +77,8 @@ public sealed class ApplicationServices : IDisposable
 
     public ThemeService Theme { get; }
 
+    public SingleInstanceService SingleInstance { get; }
+
     public static ApplicationServices Create(string baseDirectory)
     {
         var applicationPaths = PortableApplicationPaths.Create(baseDirectory);
@@ -96,7 +100,8 @@ public sealed class ApplicationServices : IDisposable
             new HardwareEncoderProbe(),
             processRunner,
             new LocalizationService(),
-            new ThemeService());
+            new ThemeService(),
+            SingleInstanceService.Acquire());
     }
 
     public void Dispose()
@@ -105,5 +110,6 @@ public sealed class ApplicationServices : IDisposable
         {
             disposableLogger.Dispose();
         }
+        SingleInstance.Dispose();
     }
 }

@@ -54,6 +54,13 @@ public partial class App : Application
         try
         {
             Services = ApplicationServices.Create(AppContext.BaseDirectory);
+            if (!Services.SingleInstance.OwnsInstance)
+            {
+                Services.SingleInstance.SignalExistingInstance();
+                Services.Dispose();
+                Environment.Exit(0);
+                return;
+            }
             var settings = await Services.SettingsStore.LoadAsync();
             Services.Localization.Apply(settings.Settings.Language);
             var cleanupResults = await Services.TemporaryOutputRecoveryService.RecoverAsync();
@@ -75,6 +82,7 @@ public partial class App : Application
             Window = mainWindow;
             DispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread();
             Services.Theme.Apply(settings.Settings.Theme, mainWindow.Content as FrameworkElement);
+            Services.SingleInstance.ListenForActivation(DispatcherQueue, Window.Activate);
             Window.Activate();
         }
         catch (Exception error)
