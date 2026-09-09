@@ -96,6 +96,19 @@ public sealed class ConversionValidatorTests
         Assert.Contains(result.Errors, issue => issue.Code == "Tool.HardwareEncoderUnavailable" && issue.Field == "video.encoder");
     }
 
+    [Fact]
+    public void H264_profile_rejects_odd_final_dimensions()
+    {
+        var profile = ConversionProfile.CreateDefault() with
+        {
+            Filters = new VideoFilterSettings(null, new FrameSize(1279, 720), VideoRotation.None, null)
+        };
+
+        var result = new ConversionValidator().Validate(VideoAudioSource(), profile, Capabilities);
+
+        Assert.Contains(result.Errors, issue => issue.Code == "Video.EvenDimensionsRequired" && issue.Field == "filters");
+    }
+
     private static MediaSourceInfo VideoAudioSource() => new(
         "input.mp4", "mp4", TimeSpan.FromMinutes(1), null, null,
         [

@@ -28,7 +28,7 @@ public sealed class ConversionValidator : IConversionValidator
         var hasAudio = source.Streams.Any(stream => stream.Type == MediaStreamType.Audio);
         ValidateVideo(profile, capabilities, format, hasVideo, hardwareAvailability, issues);
         ValidateAudio(profile, capabilities, format, hasAudio, issues);
-        ValidateFilters(profile, issues);
+        ValidateFilters(source, profile, issues);
         ValidateTimeRange(profile.TimeRange, issues);
         ValidateSubtitle(profile, issues);
 
@@ -180,7 +180,7 @@ public sealed class ConversionValidator : IConversionValidator
         }
     }
 
-    private static void ValidateFilters(ConversionProfile profile, List<ConversionValidationIssue> issues)
+    private static void ValidateFilters(MediaSourceInfo source, ConversionProfile profile, List<ConversionValidationIssue> issues)
     {
         var filters = profile.Filters;
         var hasFilters = filters.Crop is not null || filters.Scale is not null || filters.Rotation != VideoRotation.None || filters.Padding is not null;
@@ -189,17 +189,26 @@ public sealed class ConversionValidator : IConversionValidator
             AddError(issues, "Video.FiltersRequireEncoding", "filters", "Validation.Video.FiltersRequireEncoding");
         }
 
-        foreach (var (size, field) in new[] { (filters.Scale, "filters.scale"), (filters.Padding?.Canvas, "filters.padding") })
+        var videoStream = source.Streams.FirstOrDefault(stream => stream.Type == MediaStreamType.Video);
+        if (hasFilters && (videoStream?.Width is null || videoStream.Height is null))
         {
-            if (size is not null && (size.Width <= 0 || size.Height <= 0))
-            {
-                AddError(issues, "Video.InvalidDimensions", field, "Validation.Video.InvalidDimensions");
-            }
+            AddError(issues, "Video.SourceDimensionsRequired", "source.video", "Validation.Video.SourceDimensionsRequired");
+            return;
         }
 
-        if (filters.Crop is { Width: <= 0 } or { Height: <= 0 } or { X: < 0 } or { Y: < 0 })
+        if (videoStream?.Width is not null && videoStream.Height is not null)
         {
-            AddError(issues, "Video.InvalidCrop", "filters.crop", "Validation.Video.InvalidCrop");
+            var dimensions = VideoDimensionCalculator.Calculate(new FrameSize(videoStream.Width.Value, videoStream.Height.Value), filters);
+            foreach (var issue in dimensions.Issues)
+            {
+                AddError(issues, issue.Code, issue.Field, $"Validation.{issue.Code}");
+            }
+
+            if (dimensions.OutputSize is { } outputSize && profile.Video.Mode == StreamProcessingMode.Encode &&
+                RequiresEvenDimensions(profile.Video.Encoder) && (outputSize.Width % 2 != 0 || outputSize.Height % 2 != 0))
+            {
+                AddError(issues, "Video.EvenDimensionsRequired", "filters", "Validation.Video.EvenDimensionsRequired");
+            }
         }
     }
 
@@ -249,6 +258,11 @@ public sealed class ConversionValidator : IConversionValidator
         string.Equals(encoder, "libvpx", StringComparison.Ordinal) ||
         string.Equals(encoder, "libvpx-vp9", StringComparison.Ordinal) ||
         string.Equals(encoder, "libaom-av1", StringComparison.Ordinal);
+
+    private static bool RequiresEvenDimensions(string? encoder) =>
+        string.Equals(encoder, "libx264", StringComparison.Ordinal) ||
+        string.Equals(encoder, "libx265", StringComparison.Ordinal) ||
+        IsHardwareEncoder(encoder);
 
     private static void AddError(List<ConversionValidationIssue> issues, string code, string field, string messageKey, string? detail = null) =>
         issues.Add(new ConversionValidationIssue(code, field, ValidationSeverity.Error, messageKey, detail));
