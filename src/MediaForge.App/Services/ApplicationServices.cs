@@ -15,7 +15,8 @@ public sealed class ApplicationServices : IDisposable
         IApplicationSettingsStore settingsStore,
         IFfmpegToolResolver ffmpegToolResolver,
         IFfmpegVersionReader ffmpegVersionReader,
-        IFfmpegCapabilityService ffmpegCapabilityService)
+        IFfmpegCapabilityService ffmpegCapabilityService,
+        IHardwareEncoderProbe hardwareEncoderProbe)
     {
         ApplicationPaths = applicationPaths;
         Logger = logger;
@@ -23,6 +24,7 @@ public sealed class ApplicationServices : IDisposable
         FfmpegToolResolver = ffmpegToolResolver;
         FfmpegVersionReader = ffmpegVersionReader;
         FfmpegCapabilityService = ffmpegCapabilityService;
+        HardwareEncoderProbe = hardwareEncoderProbe;
     }
 
     public IApplicationPaths ApplicationPaths { get; }
@@ -37,6 +39,8 @@ public sealed class ApplicationServices : IDisposable
 
     public IFfmpegCapabilityService FfmpegCapabilityService { get; }
 
+    public IHardwareEncoderProbe HardwareEncoderProbe { get; }
+
     public static ApplicationServices Create(string baseDirectory)
     {
         var applicationPaths = PortableApplicationPaths.Create(baseDirectory);
@@ -47,7 +51,8 @@ public sealed class ApplicationServices : IDisposable
             new ApplicationSettingsStore(applicationPaths, new AtomicJsonFileStore()),
             new FfmpegToolResolver(applicationPaths.BaseDirectory),
             new FfmpegVersionReader(),
-            new FfmpegCapabilityService(applicationPaths, new AtomicJsonFileStore()));
+            new FfmpegCapabilityService(applicationPaths, new AtomicJsonFileStore()),
+            new HardwareEncoderProbe());
     }
 
     public void Dispose()
