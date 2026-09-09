@@ -30,6 +30,47 @@ public sealed class JsonLineApplicationLoggerTests : IDisposable
         Assert.Contains("information", log, StringComparison.OrdinalIgnoreCase);
     }
 
+    [Fact]
+    public void Rotation_keeps_the_active_log_and_only_the_newest_archives()
+    {
+        var paths = new TestApplicationPaths(_root);
+        var logDirectory = Path.Combine(paths.ConfigDirectory, "logs");
+        Directory.CreateDirectory(logDirectory);
+        var activeLog = Path.Combine(logDirectory, "application.ndjson");
+        File.WriteAllText(activeLog, new string('x', 40));
+        File.WriteAllText(Path.Combine(logDirectory, "application.20000101000000000.old.ndjson"), "old");
+
+        using (var logger = new JsonLineApplicationLogger(paths, new LogRetentionPolicy(32, 1)))
+        {
+            logger.Log(new ApplicationLogEntry(DateTimeOffset.UtcNow, ApplicationLogLevel.Information, "Rotated"));
+        }
+
+        Assert.True(File.Exists(activeLog));
+        Assert.Contains("Rotated", File.ReadAllText(activeLog), StringComparison.Ordinal);
+        var archives = Directory.GetFiles(logDirectory, "application.*.ndjson");
+        Assert.Single(archives);
+        Assert.Contains(new string('x', 40), File.ReadAllText(archives[0]), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Writing_prunes_excess_archives_even_before_the_active_log_needs_rotation()
+    {
+        var paths = new TestApplicationPaths(_root);
+        var logDirectory = Path.Combine(paths.ConfigDirectory, "logs");
+        Directory.CreateDirectory(logDirectory);
+        File.WriteAllText(Path.Combine(logDirectory, "application.ndjson"), "small");
+        File.WriteAllText(Path.Combine(logDirectory, "application.20000101000000000.old.ndjson"), "old");
+        File.WriteAllText(Path.Combine(logDirectory, "application.20200101000000000.new.ndjson"), "new");
+
+        using (var logger = new JsonLineApplicationLogger(paths, new LogRetentionPolicy(1024, 1)))
+        {
+            logger.Log(new ApplicationLogEntry(DateTimeOffset.UtcNow, ApplicationLogLevel.Information, "Pruned"));
+        }
+
+        var archive = Assert.Single(Directory.GetFiles(logDirectory, "application.*.ndjson"));
+        Assert.EndsWith("application.20200101000000000.new.ndjson", archive, StringComparison.Ordinal);
+    }
+
     public void Dispose()
     {
         if (Directory.Exists(_root))

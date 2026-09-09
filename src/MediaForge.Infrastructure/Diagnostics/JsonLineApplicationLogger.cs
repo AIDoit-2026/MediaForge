@@ -14,12 +14,15 @@ public sealed class JsonLineApplicationLogger : IApplicationLogger, IDisposable
     private readonly Channel<ApplicationLogEntry> _entries = Channel.CreateUnbounded<ApplicationLogEntry>(
         new UnboundedChannelOptions { SingleReader = true, SingleWriter = false });
     private readonly string? _logPath;
+    private readonly LogRetentionPolicy _retentionPolicy;
     private readonly Task _writerTask;
     private bool _isDisposed;
 
-    public JsonLineApplicationLogger(IApplicationPaths applicationPaths)
+    public JsonLineApplicationLogger(IApplicationPaths applicationPaths, LogRetentionPolicy? retentionPolicy = null)
     {
         ArgumentNullException.ThrowIfNull(applicationPaths);
+        _retentionPolicy = retentionPolicy ?? LogRetentionPolicy.Default;
+        _retentionPolicy.Validate();
         _logPath = applicationPaths.CanPersist
             ? Path.Combine(applicationPaths.ConfigDirectory, "logs", "application.ndjson")
             : null;
@@ -76,6 +79,7 @@ public sealed class JsonLineApplicationLogger : IApplicationLogger, IDisposable
             {
                 var directory = Path.GetDirectoryName(_logPath)!;
                 Directory.CreateDirectory(directory);
+                RotateIfRequired();
                 await File.AppendAllTextAsync(
                     _logPath,
                     JsonSerializer.Serialize(entry, SerializerOptions) + Environment.NewLine);
@@ -84,6 +88,26 @@ public sealed class JsonLineApplicationLogger : IApplicationLogger, IDisposable
             {
                 Debug.WriteLine($"MediaForge logging failed: {error.Message}");
             }
+        }
+    }
+
+    private void RotateIfRequired()
+    {
+        var directory = Path.GetDirectoryName(_logPath)!;
+        if (File.Exists(_logPath) && new FileInfo(_logPath).Length >= _retentionPolicy.MaximumActiveFileBytes)
+        {
+            var archivePath = Path.Combine(
+                directory,
+                $"application.{DateTimeOffset.UtcNow:yyyyMMddHHmmssfff}.{Guid.NewGuid():N}.ndjson");
+            File.Move(_logPath, archivePath);
+        }
+
+        var archives = Directory.EnumerateFiles(directory, "application.*.ndjson")
+            .OrderByDescending(Path.GetFileName, StringComparer.Ordinal)
+            .ToArray();
+        foreach (var archive in archives.Skip(_retentionPolicy.MaximumArchivedFiles))
+        {
+            File.Delete(archive);
         }
     }
 
