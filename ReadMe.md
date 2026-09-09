@@ -30,6 +30,52 @@ MVP 需求和设计已经确定，正在按照任务清单开发：
 .\eng\verify.ps1
 ```
 
+## 编译与运行
+
+### 前置条件
+
+- Windows 10 1809（17763）或更新版本，x64。
+- .NET 10 SDK，以及可用于 WinUI 3 的 Windows App SDK 开发环境。
+- 若要实际转换媒体，请自行准备同一套 FFmpeg 中的 `ffmpeg.exe` 与 `ffprobe.exe`。开发仓库中的 `ffmpeg/` 仅供本机测试，未纳入 Git 或发布包。
+
+### Debug 编译与运行
+
+在仓库根目录执行：
+
+```powershell
+dotnet restore .\src\MediaForge.App\MediaForge.App.csproj -p:Platform=x64
+dotnet build .\src\MediaForge.App\MediaForge.App.csproj -c Debug -p:Platform=x64
+& .\src\MediaForge.App\bin\x64\Debug\net10.0-windows10.0.26100.0\win-x64\MediaForge.exe
+```
+
+这是 unpackaged WinUI 3 应用；请直接启动生成的 `MediaForge.exe`，而不是使用安装包或 MSIX 部署流程。
+
+### Release portable 发布与运行
+
+```powershell
+dotnet publish .\src\MediaForge.App\MediaForge.App.csproj -c Release -p:Platform=x64
+& .\artifacts\publish\win-x64\MediaForge.exe
+```
+
+发布结果位于 `artifacts\publish\win-x64\`，可整体复制到任意可写目录运行。首次运行会在该目录创建 `config\`，用于保存设置、队列和日志。
+
+将 `ffmpeg.exe` 和 `ffprobe.exe` 一同复制到 `MediaForge.exe` 所在目录；或者启动应用后在“设置”页指定二者所在的目录。应用不会从 PATH 查找、下载或更新 FFmpeg。
+
+### 测试
+
+完整的还原、Release 构建、单元测试、集成测试和 portable 发布：
+
+```powershell
+.\eng\verify.ps1
+```
+
+仅运行测试时：
+
+```powershell
+dotnet test .\tests\MediaForge.Core.Tests\MediaForge.Core.Tests.csproj -c Debug -p:Platform=x64
+dotnet test .\tests\MediaForge.IntegrationTests\MediaForge.IntegrationTests.csproj -c Debug -p:Platform=x64
+```
+
 ## 许可证
 
 MediaForge 使用 [MIT License](LICENSE) 开源。FFmpeg 是独立软件并使用自己的许可证，详见[第三方软件说明](THIRD_PARTY_NOTICES.md)。
