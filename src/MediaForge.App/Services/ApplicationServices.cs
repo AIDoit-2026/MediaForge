@@ -14,13 +14,15 @@ public sealed class ApplicationServices : IDisposable
         IApplicationLogger logger,
         IApplicationSettingsStore settingsStore,
         IFfmpegToolResolver ffmpegToolResolver,
-        IFfmpegVersionReader ffmpegVersionReader)
+        IFfmpegVersionReader ffmpegVersionReader,
+        IFfmpegCapabilityService ffmpegCapabilityService)
     {
         ApplicationPaths = applicationPaths;
         Logger = logger;
         SettingsStore = settingsStore;
         FfmpegToolResolver = ffmpegToolResolver;
         FfmpegVersionReader = ffmpegVersionReader;
+        FfmpegCapabilityService = ffmpegCapabilityService;
     }
 
     public IApplicationPaths ApplicationPaths { get; }
@@ -33,6 +35,8 @@ public sealed class ApplicationServices : IDisposable
 
     public IFfmpegVersionReader FfmpegVersionReader { get; }
 
+    public IFfmpegCapabilityService FfmpegCapabilityService { get; }
+
     public static ApplicationServices Create(string baseDirectory)
     {
         var applicationPaths = PortableApplicationPaths.Create(baseDirectory);
@@ -42,7 +46,8 @@ public sealed class ApplicationServices : IDisposable
             logger,
             new ApplicationSettingsStore(applicationPaths, new AtomicJsonFileStore()),
             new FfmpegToolResolver(applicationPaths.BaseDirectory),
-            new FfmpegVersionReader());
+            new FfmpegVersionReader(),
+            new FfmpegCapabilityService(applicationPaths, new AtomicJsonFileStore()));
     }
 
     public void Dispose()
