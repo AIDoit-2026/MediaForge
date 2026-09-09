@@ -54,6 +54,8 @@ public partial class App : Application
         try
         {
             Services = ApplicationServices.Create(AppContext.BaseDirectory);
+            var settings = await Services.SettingsStore.LoadAsync();
+            Services.Localization.Apply(settings.Settings.Language);
             var cleanupResults = await Services.TemporaryOutputRecoveryService.RecoverAsync();
             Services.Logger.Log(new ApplicationLogEntry(
                 DateTimeOffset.UtcNow,
@@ -72,6 +74,7 @@ public partial class App : Application
             mainWindow.Initialize(Services.ApplicationPaths);
             Window = mainWindow;
             DispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread();
+            Services.Theme.Apply(settings.Settings.Theme, mainWindow.Content as FrameworkElement);
             Window.Activate();
         }
         catch (Exception error)

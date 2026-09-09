@@ -58,7 +58,10 @@ public sealed partial class SettingsPage : Page
         };
 
         await App.Services.SettingsStore.SaveAsync(_settings);
-        ShowStatus("设置已保存。", InfoBarSeverity.Success);
+        App.Services.Localization.Apply(_settings.Language);
+        App.Services.Theme.Apply(_settings.Theme, App.Window.Content as FrameworkElement);
+        ShowStatus(Strings("Settings.Saved"), InfoBarSeverity.Success);
+        (App.Window as MainWindow)?.RefreshShell();
     }
 
     private void ShowStatus(string message, InfoBarSeverity severity)
@@ -70,4 +73,7 @@ public sealed partial class SettingsPage : Page
 
     private static string? EmptyToNull(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    private static string Strings(string key) =>
+        Windows.ApplicationModel.Resources.ResourceLoader.GetForViewIndependentUse().GetString(key);
 }

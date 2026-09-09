@@ -30,4 +30,13 @@ public sealed partial class MainWindow : Window
         mainPage.Initialize(applicationPaths);
         RootFrame.Content = mainPage;
     }
+
+    public void RefreshShell()
+    {
+        var currentPage = (RootFrame.Content as MainPage)?.CurrentPageType;
+        var mainPage = new MainPage(currentPage);
+        mainPage.Initialize(App.Services.ApplicationPaths);
+        RootFrame.Content = mainPage;
+        App.Services.Theme.Apply(App.Services.Theme.Theme, Content as FrameworkElement);
+    }
 }

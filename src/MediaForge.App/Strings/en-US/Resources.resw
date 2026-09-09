@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <data name="AppTitle" xml:space="preserve"><value>MediaForge</value></data>
+  <data name="TemporarySession.Title" xml:space="preserve"><value>Temporary session</value></data>
+  <data name="TemporarySession.Message" xml:space="preserve"><value>The config folder cannot be written. This session uses defaults; settings, queue, and logs will not be saved.</value></data>
+  <data name="Navigation.Conversion" xml:space="preserve"><value>Convert</value></data>
+  <data name="Navigation.Presets" xml:space="preserve"><value>Presets</value></data>
+  <data name="Navigation.Settings" xml:space="preserve"><value>Settings</value></data>
+  <data name="Conversion.Title" xml:space="preserve"><value>Convert</value></data>
+  <data name="Conversion.AddFiles" xml:space="preserve"><value>Add files</value></data>
+  <data name="Conversion.AddFolder" xml:space="preserve"><value>Add folder</value></data>
+  <data name="Conversion.Start" xml:space="preserve"><value>Start conversion</value></data>
+  <data name="Conversion.Clear" xml:space="preserve"><value>Clear queue</value></data>
+  <data name="Conversion.EmptyTitle" xml:space="preserve"><value>Add media files to start converting</value></data>
+  <data name="Conversion.EmptyDescription" xml:space="preserve"><value>Multiple selection, drag and drop, and filtered folder imports are supported.</value></data>
+  <data name="Settings.Title" xml:space="preserve"><value>Settings</value></data>
+  <data name="Settings.Saved" xml:space="preserve"><value>Settings saved.</value></data>
+  <data name="Settings.CannotPersist" xml:space="preserve"><value>This temporary session cannot save settings.</value></data>
+  <data name="Settings.InvalidConcurrency" xml:space="preserve"><value>Maximum concurrency must be between 1 and 4.</value></data>
+  <data name="Settings.CorruptRecovered" xml:space="preserve"><value>A corrupt settings file was backed up and defaults were restored.</value></data>
+  <data name="SettingsTitle.Text" xml:space="preserve"><value>Settings</value></data><data name="SettingsDescription.Text" xml:space="preserve"><value>Changes are saved in the config folder beside the application.</value></data>
+  <data name="LanguageLabel.Text" xml:space="preserve"><value>Language</value></data><data name="SystemLanguageOption.Content" xml:space="preserve"><value>System default</value></data><data name="ChineseLanguageOption.Content" xml:space="preserve"><value>Simplified Chinese</value></data>
+  <data name="ThemeLabel.Text" xml:space="preserve"><value>Theme</value></data><data name="SystemThemeOption.Content" xml:space="preserve"><value>System default</value></data><data name="LightThemeOption.Content" xml:space="preserve"><value>Light</value></data><data name="DarkThemeOption.Content" xml:space="preserve"><value>Dark</value></data>
+  <data name="FfmpegDirectoryLabel.Text" xml:space="preserve"><value>FFmpeg directory</value></data><data name="FfmpegDirectoryTextBox.PlaceholderText" xml:space="preserve"><value>Empty: check the directory containing MediaForge.exe</value></data><data name="FfmpegDirectoryTextBox.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>FFmpeg directory</value></data>
+  <data name="DefaultOutputDirectoryLabel.Text" xml:space="preserve"><value>Default output directory</value></data><data name="DefaultOutputDirectoryTextBox.PlaceholderText" xml:space="preserve"><value>Empty: chosen by each conversion job</value></data><data name="DefaultOutputDirectoryTextBox.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve"><value>Default output directory</value></data>
+  <data name="ConflictPolicyLabel.Text" xml:space="preserve"><value>Name conflict</value></data><data name="SkipConflictOption.Content" xml:space="preserve"><value>Skip</value></data><data name="OverwriteConflictOption.Content" xml:space="preserve"><value>Overwrite</value></data><data name="RenameConflictOption.Content" xml:space="preserve"><value>Auto rename</value></data><data name="MaxConcurrencyLabel.Text" xml:space="preserve"><value>Maximum concurrent jobs</value></data><data name="SaveButton.Content" xml:space="preserve"><value>Save settings</value></data>
+  <data name="ConversionTitle.Text" xml:space="preserve"><value>Convert</value></data><data name="AddFilesButton.Label" xml:space="preserve"><value>Add files</value></data><data name="AddFolderButton.Label" xml:space="preserve"><value>Add folder</value></data><data name="StartButton.Label" xml:space="preserve"><value>Start conversion</value></data><data name="ClearButton.Label" xml:space="preserve"><value>Clear queue</value></data><data name="EmptyTitle.Text" xml:space="preserve"><value>Add media files to start converting</value></data><data name="EmptyDescription.Text" xml:space="preserve"><value>Multiple selection, drag and drop, and filtered folder imports are supported.</value></data>
+  <data name="PresetsTitle.Text" xml:space="preserve"><value>Presets</value></data><data name="PresetsDescription.Text" xml:space="preserve"><value>Built-in presets are read-only; you can create your own later.</value></data>
+</root>

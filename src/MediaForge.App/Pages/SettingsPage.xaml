@@ -7,9 +7,9 @@
 
     <ScrollViewer>
         <StackPanel Padding="24,16,24,24" Spacing="16">
-            <TextBlock Text="设置" Style="{StaticResource TitleTextBlockStyle}" />
+            <TextBlock x:Uid="SettingsTitle" Style="{StaticResource TitleTextBlockStyle}" />
             <TextBlock
-                Text="更改会保存到程序目录下的 config 文件夹。"
+                x:Uid="SettingsDescription"
                 Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
 
             <InfoBar
@@ -31,44 +31,44 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <TextBlock Grid.Row="0" VerticalAlignment="Center" Text="语言" />
+                <TextBlock x:Uid="LanguageLabel" Grid.Row="0" VerticalAlignment="Center" />
                 <ComboBox x:Name="LanguageComboBox" Grid.Row="0" Grid.Column="1" SelectedIndex="0">
-                    <ComboBoxItem Content="跟随系统" />
-                    <ComboBoxItem Content="简体中文" />
+                    <ComboBoxItem x:Uid="SystemLanguageOption" />
+                    <ComboBoxItem x:Uid="ChineseLanguageOption" />
                     <ComboBoxItem Content="English" />
                 </ComboBox>
 
-                <TextBlock Grid.Row="1" VerticalAlignment="Center" Text="主题" />
+                <TextBlock x:Uid="ThemeLabel" Grid.Row="1" VerticalAlignment="Center" />
                 <ComboBox x:Name="ThemeComboBox" Grid.Row="1" Grid.Column="1" SelectedIndex="0">
-                    <ComboBoxItem Content="跟随系统" />
-                    <ComboBoxItem Content="浅色" />
-                    <ComboBoxItem Content="深色" />
+                    <ComboBoxItem x:Uid="SystemThemeOption" />
+                    <ComboBoxItem x:Uid="LightThemeOption" />
+                    <ComboBoxItem x:Uid="DarkThemeOption" />
                 </ComboBox>
 
-                <TextBlock Grid.Row="2" VerticalAlignment="Center" Text="FFmpeg 目录" />
+                <TextBlock x:Uid="FfmpegDirectoryLabel" Grid.Row="2" VerticalAlignment="Center" />
                 <TextBox
                     x:Name="FfmpegDirectoryTextBox"
                     Grid.Row="2"
                     Grid.Column="1"
                     automation:AutomationProperties.Name="FFmpeg 目录"
-                    PlaceholderText="留空时检查 MediaForge.exe 所在目录" />
+                    x:Uid="FfmpegDirectoryTextBox" />
 
-                <TextBlock Grid.Row="3" VerticalAlignment="Center" Text="默认输出目录" />
+                <TextBlock x:Uid="DefaultOutputDirectoryLabel" Grid.Row="3" VerticalAlignment="Center" />
                 <TextBox
                     x:Name="DefaultOutputDirectoryTextBox"
                     Grid.Row="3"
                     Grid.Column="1"
                     automation:AutomationProperties.Name="默认输出目录"
-                    PlaceholderText="留空时由转换任务决定" />
+                    x:Uid="DefaultOutputDirectoryTextBox" />
 
-                <TextBlock Grid.Row="4" VerticalAlignment="Center" Text="同名文件" />
+                <TextBlock x:Uid="ConflictPolicyLabel" Grid.Row="4" VerticalAlignment="Center" />
                 <ComboBox x:Name="ConflictPolicyComboBox" Grid.Row="4" Grid.Column="1" SelectedIndex="2">
-                    <ComboBoxItem Content="跳过" />
-                    <ComboBoxItem Content="覆盖" />
-                    <ComboBoxItem Content="自动重命名" />
+                    <ComboBoxItem x:Uid="SkipConflictOption" />
+                    <ComboBoxItem x:Uid="OverwriteConflictOption" />
+                    <ComboBoxItem x:Uid="RenameConflictOption" />
                 </ComboBox>
 
-                <TextBlock Grid.Row="5" VerticalAlignment="Center" Text="最大并行数" />
+                <TextBlock x:Uid="MaxConcurrencyLabel" Grid.Row="5" VerticalAlignment="Center" />
                 <NumberBox
                     x:Name="MaxConcurrencyNumberBox"
                     Grid.Row="5"
@@ -84,7 +84,7 @@
                 x:Name="SaveButton"
                 HorizontalAlignment="Left"
                 Click="OnSaveClick"
-                Content="保存设置" />
+                x:Uid="SaveButton" />
         </StackPanel>
     </ScrollViewer>
 </Page>

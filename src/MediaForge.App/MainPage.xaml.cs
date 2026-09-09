@@ -9,15 +9,33 @@ public sealed partial class MainPage : Page
 {
     public MainPageViewModel ViewModel { get; }
 
-    public MainPage()
+    public Type? CurrentPageType => ContentFrame.CurrentSourcePageType;
+
+    public MainPage(Type? initialPage = null)
     {
         ViewModel = new MainPageViewModel();
         InitializeComponent();
-        ContentFrame.Navigate(typeof(ConversionPage));
+        ApplyStrings();
+        var page = initialPage ?? typeof(ConversionPage);
+        ContentFrame.Navigate(page);
+        RootNavigation.SelectedItem = page == typeof(PresetsPage) ? PresetsNavigationItem : ConversionNavigationItem;
     }
 
     public void Initialize(IApplicationPaths applicationPaths) =>
         ViewModel.Initialize(applicationPaths);
+
+    private void ApplyStrings()
+    {
+        var strings = Windows.ApplicationModel.Resources.ResourceLoader.GetForViewIndependentUse();
+        TemporarySessionInfoBar.Title = strings.GetString("TemporarySession.Title");
+        TemporarySessionInfoBar.Message = strings.GetString("TemporarySession.Message");
+        ConversionNavigationItem.Content = strings.GetString("Navigation.Conversion");
+        PresetsNavigationItem.Content = strings.GetString("Navigation.Presets");
+        if (RootNavigation.SettingsItem is NavigationViewItem settingsItem)
+        {
+            settingsItem.Content = strings.GetString("Navigation.Settings");
+        }
+    }
 
     private void OnNavigationSelectionChanged(
         NavigationView sender,

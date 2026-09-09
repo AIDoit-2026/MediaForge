@@ -24,7 +24,9 @@ public sealed class ApplicationServices : IDisposable
         IFfmpegVersionReader ffmpegVersionReader,
         IFfmpegCapabilityService ffmpegCapabilityService,
         IHardwareEncoderProbe hardwareEncoderProbe,
-        IFfmpegProcessRunner ffmpegProcessRunner)
+        IFfmpegProcessRunner ffmpegProcessRunner,
+        LocalizationService localization,
+        ThemeService theme)
     {
         ApplicationPaths = applicationPaths;
         Logger = logger;
@@ -39,6 +41,8 @@ public sealed class ApplicationServices : IDisposable
         FfmpegCapabilityService = ffmpegCapabilityService;
         HardwareEncoderProbe = hardwareEncoderProbe;
         FfmpegProcessRunner = ffmpegProcessRunner;
+        Localization = localization;
+        Theme = theme;
     }
 
     public IApplicationPaths ApplicationPaths { get; }
@@ -67,6 +71,10 @@ public sealed class ApplicationServices : IDisposable
 
     public IFfmpegProcessRunner FfmpegProcessRunner { get; }
 
+    public LocalizationService Localization { get; }
+
+    public ThemeService Theme { get; }
+
     public static ApplicationServices Create(string baseDirectory)
     {
         var applicationPaths = PortableApplicationPaths.Create(baseDirectory);
@@ -86,7 +94,9 @@ public sealed class ApplicationServices : IDisposable
             new FfmpegVersionReader(),
             new FfmpegCapabilityService(applicationPaths, new AtomicJsonFileStore(), processRunner),
             new HardwareEncoderProbe(),
-            processRunner);
+            processRunner,
+            new LocalizationService(),
+            new ThemeService());
     }
 
     public void Dispose()

@@ -6,9 +6,9 @@
     xmlns:local="using:MediaForge.App.Pages">
 
     <StackPanel Padding="24,16,24,24" Spacing="16">
-        <TextBlock Text="预设" Style="{StaticResource TitleTextBlockStyle}" />
+        <TextBlock x:Uid="PresetsTitle" Style="{StaticResource TitleTextBlockStyle}" />
         <TextBlock
-            Text="内置预设为只读；后续可创建自己的预设。"
+            x:Uid="PresetsDescription"
             Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
         <ListView x:Name="PresetListView" SelectionMode="None">
             <ListView.ItemTemplate>

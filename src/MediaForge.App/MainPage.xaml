@@ -17,9 +17,9 @@
             Margin="12,8,12,0"
             IsClosable="False"
             IsOpen="{x:Bind ViewModel.IsPersistenceUnavailable, Mode=OneWay}"
-            Message="无法写入程序目录下的 config 文件夹。本次将使用默认参数，设置、队列和日志不会保存。请将程序移到可写目录后重新启动。"
+            x:Name="TemporarySessionInfoBar"
             Severity="Warning"
-            Title="当前为临时会话" />
+            />
 
         <NavigationView
             x:Name="RootNavigation"
@@ -30,12 +30,12 @@
             PaneDisplayMode="LeftCompact"
             SelectionChanged="OnNavigationSelectionChanged">
             <NavigationView.MenuItems>
-                <NavigationViewItem Content="转换" IsSelected="True" Tag="conversion">
+                <NavigationViewItem x:Name="ConversionNavigationItem" IsSelected="True" Tag="conversion">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xE714;" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
-                <NavigationViewItem Content="预设" Tag="presets">
+                <NavigationViewItem x:Name="PresetsNavigationItem" Tag="presets">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xE8FD;" />
                     </NavigationViewItem.Icon>

@@ -11,16 +11,16 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <TextBlock Text="转换" Style="{StaticResource TitleTextBlockStyle}" />
+        <TextBlock x:Uid="ConversionTitle" Style="{StaticResource TitleTextBlockStyle}" />
 
         <CommandBar Grid.Row="1" DefaultLabelPosition="Right">
             <CommandBar.PrimaryCommands>
-                <AppBarButton Icon="Add" Label="添加文件" />
-                <AppBarButton Icon="Folder" Label="添加文件夹" />
-                <AppBarButton Icon="Play" Label="开始转换" />
+                <AppBarButton x:Uid="AddFilesButton" Icon="Add" />
+                <AppBarButton x:Uid="AddFolderButton" Icon="Folder" />
+                <AppBarButton x:Uid="StartButton" Icon="Play" />
             </CommandBar.PrimaryCommands>
             <CommandBar.SecondaryCommands>
-                <AppBarButton Icon="Delete" Label="清空队列" />
+                <AppBarButton x:Uid="ClearButton" Icon="Delete" />
             </CommandBar.SecondaryCommands>
         </CommandBar>
 
@@ -32,11 +32,11 @@
                 <FontIcon Glyph="&#xE8B7;" FontSize="40" />
                 <TextBlock
                     HorizontalAlignment="Center"
-                    Text="添加媒体文件以开始转换"
+                    x:Uid="EmptyTitle"
                     Style="{StaticResource SubtitleTextBlockStyle}" />
                 <TextBlock
                     HorizontalAlignment="Center"
-                    Text="支持多选、拖放和按条件导入文件夹"
+                    x:Uid="EmptyDescription"
                     Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
             </StackPanel>
         </Grid>
