@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using MediaForge.Core.Configuration;
 using MediaForge.Core.Ffmpeg;
 using MediaForge.Infrastructure.Configuration;
@@ -11,13 +10,19 @@ public sealed class FfmpegCapabilityService : IFfmpegCapabilityService
 
     private readonly IApplicationPaths _applicationPaths;
     private readonly AtomicJsonFileStore _jsonStore;
+    private readonly IFfmpegProcessRunner _processRunner;
 
-    public FfmpegCapabilityService(IApplicationPaths applicationPaths, AtomicJsonFileStore jsonStore)
+    public FfmpegCapabilityService(
+        IApplicationPaths applicationPaths,
+        AtomicJsonFileStore jsonStore,
+        IFfmpegProcessRunner processRunner)
     {
         ArgumentNullException.ThrowIfNull(applicationPaths);
         ArgumentNullException.ThrowIfNull(jsonStore);
+        ArgumentNullException.ThrowIfNull(processRunner);
         _applicationPaths = applicationPaths;
         _jsonStore = jsonStore;
+        _processRunner = processRunner;
     }
 
     public async Task<FfmpegCapabilities> GetAsync(
@@ -70,37 +75,21 @@ public sealed class FfmpegCapabilityService : IFfmpegCapabilityService
         return capabilities;
     }
 
-    private static async Task<string> RunQueryAsync(
+    private async Task<string> RunQueryAsync(
         string ffmpegPath,
         string queryArgument,
         CancellationToken cancellationToken)
     {
-        using var process = new Process
+        var result = await _processRunner.RunAsync(
+            ffmpegPath,
+            ["-hide_banner", queryArgument],
+            cancellationToken);
+        if (result.ExitCode != 0)
         {
-            StartInfo = new ProcessStartInfo(ffmpegPath)
-            {
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true
-            }
-        };
-        process.StartInfo.ArgumentList.Add("-hide_banner");
-        process.StartInfo.ArgumentList.Add(queryArgument);
-        process.Start();
-
-        var standardOutputTask = process.StandardOutput.ReadToEndAsync(cancellationToken);
-        var standardErrorTask = process.StandardError.ReadToEndAsync(cancellationToken);
-        await process.WaitForExitAsync(cancellationToken);
-        var standardOutput = await standardOutputTask;
-        var standardError = await standardErrorTask;
-
-        if (process.ExitCode != 0)
-        {
-            throw new InvalidOperationException($"FFmpeg {queryArgument} failed: {standardError}");
+            throw new InvalidOperationException($"FFmpeg {queryArgument} failed: {result.StandardError}");
         }
 
-        return standardOutput;
+        return result.StandardOutput;
     }
 
     private static FfmpegCapabilitiesCacheDocument CreateEmptyCache() => new(

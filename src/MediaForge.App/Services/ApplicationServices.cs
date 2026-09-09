@@ -16,7 +16,8 @@ public sealed class ApplicationServices : IDisposable
         IFfmpegToolResolver ffmpegToolResolver,
         IFfmpegVersionReader ffmpegVersionReader,
         IFfmpegCapabilityService ffmpegCapabilityService,
-        IHardwareEncoderProbe hardwareEncoderProbe)
+        IHardwareEncoderProbe hardwareEncoderProbe,
+        IFfmpegProcessRunner ffmpegProcessRunner)
     {
         ApplicationPaths = applicationPaths;
         Logger = logger;
@@ -25,6 +26,7 @@ public sealed class ApplicationServices : IDisposable
         FfmpegVersionReader = ffmpegVersionReader;
         FfmpegCapabilityService = ffmpegCapabilityService;
         HardwareEncoderProbe = hardwareEncoderProbe;
+        FfmpegProcessRunner = ffmpegProcessRunner;
     }
 
     public IApplicationPaths ApplicationPaths { get; }
@@ -41,18 +43,22 @@ public sealed class ApplicationServices : IDisposable
 
     public IHardwareEncoderProbe HardwareEncoderProbe { get; }
 
+    public IFfmpegProcessRunner FfmpegProcessRunner { get; }
+
     public static ApplicationServices Create(string baseDirectory)
     {
         var applicationPaths = PortableApplicationPaths.Create(baseDirectory);
         var logger = new JsonLineApplicationLogger(applicationPaths);
+        var processRunner = new FfmpegProcessRunner();
         return new ApplicationServices(
             applicationPaths,
             logger,
             new ApplicationSettingsStore(applicationPaths, new AtomicJsonFileStore()),
             new FfmpegToolResolver(applicationPaths.BaseDirectory),
             new FfmpegVersionReader(),
-            new FfmpegCapabilityService(applicationPaths, new AtomicJsonFileStore()),
-            new HardwareEncoderProbe());
+            new FfmpegCapabilityService(applicationPaths, new AtomicJsonFileStore(), processRunner),
+            new HardwareEncoderProbe(),
+            processRunner);
     }
 
     public void Dispose()
