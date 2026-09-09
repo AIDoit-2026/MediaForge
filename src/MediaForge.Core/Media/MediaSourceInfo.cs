@@ -6,4 +6,5 @@ public sealed record MediaSourceInfo(
     TimeSpan? Duration,
     long? Size,
     long? BitRate,
-    IReadOnlyList<MediaStreamInfo> Streams);
+    IReadOnlyList<MediaStreamInfo> Streams,
+    IReadOnlyDictionary<string, string>? Metadata = null);

@@ -1,4 +1,5 @@
 using System.Globalization;
+using MediaForge.Core.Media;
 
 namespace MediaForge.Core.Conversion;
 
@@ -31,7 +32,8 @@ public sealed class FfmpegCommandBuilder : ICommandBuilder
     {
         var arguments = CreateBaseArguments(job);
         AddTimeRange(arguments, job.Profile.TimeRange);
-        AddStreamMapping(arguments, job.Profile);
+        AddStreamMapping(arguments, job.Source, job.Profile);
+        AddSelectedMetadata(arguments, job.Source.Metadata);
         AddVideoArguments(arguments, job.Profile.Video, job.Profile.Filters, job.Profile.ExternalSrtPath, pass, job.TwoPassLogFilePrefix);
         AddAudioArguments(arguments, job.Profile.Audio);
         arguments.Add(job.TemporaryOutputPath);
@@ -59,11 +61,28 @@ public sealed class FfmpegCommandBuilder : ICommandBuilder
         }
     }
 
-    private static void AddStreamMapping(List<string> arguments, ConversionProfile profile)
+    private static void AddStreamMapping(List<string> arguments, MediaSourceInfo source, ConversionProfile profile)
     {
         if (profile.Video.Mode == StreamProcessingMode.Exclude)
         {
-            arguments.Add("-vn");
+            var cover = profile.OutputContainer switch
+            {
+                "m4a" or "mp3" => source.Streams.FirstOrDefault(stream => stream.IsAttachedPicture),
+                _ => null
+            };
+            if (cover is null)
+            {
+                arguments.Add("-vn");
+            }
+            else
+            {
+                arguments.Add("-map");
+                arguments.Add($"0:{cover.Index}?");
+                arguments.Add("-c:v");
+                arguments.Add("copy");
+                arguments.Add("-disposition:v:0");
+                arguments.Add("attached_pic");
+            }
         }
         else
         {
@@ -83,6 +102,20 @@ public sealed class FfmpegCommandBuilder : ICommandBuilder
 
         arguments.Add("-map_metadata");
         arguments.Add("-1");
+    }
+
+    private static void AddSelectedMetadata(List<string> arguments, IReadOnlyDictionary<string, string>? metadata)
+    {
+        if (metadata is null) return;
+
+        foreach (var key in new[] { "artist", "author", "title", "album" })
+        {
+            if (metadata.TryGetValue(key, out var value) && !string.IsNullOrWhiteSpace(value))
+            {
+                arguments.Add("-metadata");
+                arguments.Add($"{key}={value}");
+            }
+        }
     }
 
     private static void AddVideoArguments(

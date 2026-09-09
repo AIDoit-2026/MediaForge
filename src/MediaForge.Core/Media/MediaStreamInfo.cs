@@ -14,4 +14,5 @@ public sealed record MediaStreamInfo(
     int? SampleRate = null,
     int? Channels = null,
     string? ChannelLayout = null,
-    long? BitRate = null);
+    long? BitRate = null,
+    bool IsAttachedPicture = false);

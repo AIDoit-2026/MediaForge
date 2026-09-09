@@ -24,7 +24,8 @@ public static class FfprobeOutputParser
             GetDuration(format, "duration"),
             GetLong(format, "size"),
             GetLong(format, "bit_rate"),
-            streams);
+            streams,
+            GetTags(format));
     }
 
     private static MediaStreamInfo ParseStream(JsonElement stream) => new(
@@ -41,7 +42,8 @@ public static class FfprobeOutputParser
         GetInt(stream, "sample_rate"),
         GetInt(stream, "channels"),
         GetString(stream, "channel_layout"),
-        GetLong(stream, "bit_rate"));
+        GetLong(stream, "bit_rate"),
+        stream.TryGetProperty("disposition", out var attachmentDisposition) && GetInt(attachmentDisposition, "attached_pic") == 1);
 
     private static MediaStreamType ParseType(string? type) => type switch
     {
@@ -54,6 +56,13 @@ public static class FfprobeOutputParser
 
     private static string? GetTag(JsonElement element, string name) =>
         element.TryGetProperty("tags", out var tags) ? GetString(tags, name) : null;
+
+    private static IReadOnlyDictionary<string, string> GetTags(JsonElement element) =>
+        element.TryGetProperty("tags", out var tags) && tags.ValueKind == JsonValueKind.Object
+            ? tags.EnumerateObject()
+                .Where(property => GetText(property.Value) is not null)
+                .ToDictionary(property => property.Name, property => GetText(property.Value)!, StringComparer.OrdinalIgnoreCase)
+            : new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
     private static string? GetString(JsonElement element, string name) =>
         element.ValueKind == JsonValueKind.Object && element.TryGetProperty(name, out var value)

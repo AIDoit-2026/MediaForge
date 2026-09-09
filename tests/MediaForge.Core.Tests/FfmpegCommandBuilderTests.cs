@@ -123,6 +123,47 @@ public sealed class FfmpegCommandBuilderTests
         Assert.Equal(plan.FinalInvocation.Arguments, plan.Manifest.InvocationArguments[^1]);
     }
 
+    [Fact]
+    public void Command_preserves_only_selected_container_metadata()
+    {
+        var source = new MediaSourceInfo(
+            "input.mp4", "mp4", TimeSpan.FromMinutes(1), null, null, [],
+            new Dictionary<string, string>
+            {
+                ["artist"] = "Artist",
+                ["title"] = "Title",
+                ["album"] = "Album",
+                ["comment"] = "Do not copy"
+            });
+        var job = new ConversionJobSpec(source, "final.mp4", "temporary.mp4", ConversionProfile.CreateDefault(), DateTimeOffset.UtcNow);
+
+        var arguments = new FfmpegCommandBuilder().Build(job).FinalInvocation.Arguments;
+
+        Assert.Equal("-1", ValueAfter(arguments, "-map_metadata"));
+        Assert.Contains("artist=Artist", arguments);
+        Assert.Contains("title=Title", arguments);
+        Assert.Contains("album=Album", arguments);
+        Assert.DoesNotContain("comment=Do not copy", arguments);
+    }
+
+    [Fact]
+    public void Audio_output_preserves_a_compatible_attached_picture_without_mapping_main_video()
+    {
+        var source = new MediaSourceInfo("input.m4a", "mov", TimeSpan.FromMinutes(1), null, null,
+        [
+            new MediaStreamInfo(0, MediaStreamType.Audio, "aac", null, null, true),
+            new MediaStreamInfo(1, MediaStreamType.Video, "mjpeg", null, null, false, IsAttachedPicture: true)
+        ]);
+        var profile = ConversionProfile.CreateDefault() with { OutputContainer = "m4a", Video = VideoEncodingSettings.Exclude };
+
+        var arguments = new FfmpegCommandBuilder().Build(new ConversionJobSpec(source, "output.m4a", "temp.m4a", profile, DateTimeOffset.UtcNow)).FinalInvocation.Arguments;
+
+        Assert.Contains("0:1?", arguments);
+        Assert.Equal("copy", ValueAfter(arguments, "-c:v"));
+        Assert.Equal("attached_pic", ValueAfter(arguments, "-disposition:v:0"));
+        Assert.DoesNotContain("-vn", arguments);
+    }
+
     private static ConversionJobSpec Job(ConversionProfile profile) => new(
         new MediaSourceInfo("input path.mp4", "mp4", TimeSpan.FromMinutes(1), null, null, []),
         "final output.mp4", "temporary output.mp4", profile, DateTimeOffset.Parse("2026-09-09T00:00:00Z"));

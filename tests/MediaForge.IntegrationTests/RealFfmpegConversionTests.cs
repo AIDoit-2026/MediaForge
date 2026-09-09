@@ -28,6 +28,7 @@ public sealed class RealFfmpegConversionTests : IDisposable
         [
             "-hide_banner", "-y", "-f", "lavfi", "-i", "testsrc2=size=320x180:rate=25",
             "-f", "lavfi", "-i", "sine=frequency=1000:sample_rate=48000", "-t", "1",
+            "-metadata", "artist=MediaForge", "-metadata", "title=Generated sample", "-metadata", "album=Test collection",
             "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", inputPath
         ]);
         Assert.Equal(0, generated.ExitCode);
@@ -40,6 +41,9 @@ public sealed class RealFfmpegConversionTests : IDisposable
         var videoInfo = await probe.ProbeAsync(videoOutput);
         Assert.Contains(videoInfo.Streams, stream => stream.Type == MediaStreamType.Video && stream.Width == 160 && stream.Height == 90);
         Assert.Contains(videoInfo.Streams, stream => stream.Type == MediaStreamType.Audio && stream.Codec == "aac");
+        Assert.Equal("MediaForge", videoInfo.Metadata!["artist"]);
+        Assert.Equal("Generated sample", videoInfo.Metadata["title"]);
+        Assert.Equal("Test collection", videoInfo.Metadata["album"]);
 
         var audioOutput = await ConvertAsync(input, "audio-output.m4a", ConversionProfile.CreateDefault() with
         {
