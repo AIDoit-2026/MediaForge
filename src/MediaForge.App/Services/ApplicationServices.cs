@@ -14,6 +14,7 @@ public sealed class ApplicationServices : IDisposable
         IApplicationLogger logger,
         IApplicationSettingsStore settingsStore,
         IQueueStore queueStore,
+        IUserPresetStore userPresetStore,
         IFfmpegToolResolver ffmpegToolResolver,
         IFfmpegVersionReader ffmpegVersionReader,
         IFfmpegCapabilityService ffmpegCapabilityService,
@@ -24,6 +25,7 @@ public sealed class ApplicationServices : IDisposable
         Logger = logger;
         SettingsStore = settingsStore;
         QueueStore = queueStore;
+        UserPresetStore = userPresetStore;
         FfmpegToolResolver = ffmpegToolResolver;
         FfmpegVersionReader = ffmpegVersionReader;
         FfmpegCapabilityService = ffmpegCapabilityService;
@@ -38,6 +40,8 @@ public sealed class ApplicationServices : IDisposable
     public IApplicationSettingsStore SettingsStore { get; }
 
     public IQueueStore QueueStore { get; }
+
+    public IUserPresetStore UserPresetStore { get; }
 
     public IFfmpegToolResolver FfmpegToolResolver { get; }
 
@@ -59,6 +63,7 @@ public sealed class ApplicationServices : IDisposable
             logger,
             new ApplicationSettingsStore(applicationPaths, new AtomicJsonFileStore()),
             new QueueStore(applicationPaths, new AtomicJsonFileStore()),
+            new UserPresetStore(applicationPaths, new AtomicJsonFileStore()),
             new FfmpegToolResolver(applicationPaths.BaseDirectory),
             new FfmpegVersionReader(),
             new FfmpegCapabilityService(applicationPaths, new AtomicJsonFileStore(), processRunner),
