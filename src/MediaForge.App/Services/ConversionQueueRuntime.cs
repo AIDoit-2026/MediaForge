@@ -76,6 +76,10 @@ public sealed class ConversionQueueRuntime : IDisposable
     {
         var settings = await _settingsStore.LoadAsync(cancellationToken);
         _scheduler.SetMaximumConcurrency(settings.Settings.MaxConcurrentJobs);
+        foreach (var interrupted in Queue.GetSnapshot().Jobs.Where(job => job.Status == ConversionJobStatus.Interrupted))
+        {
+            Queue.Retry(interrupted.Id);
+        }
         _ = _scheduler.StartQueuedJobsAsync();
     }
 

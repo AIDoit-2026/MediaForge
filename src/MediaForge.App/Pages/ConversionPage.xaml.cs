@@ -20,6 +20,12 @@ public sealed partial class ConversionPage : Page
         InitializeComponent();
         ApplyStrings();
         MediaListView.ItemsSource = _media;
+        foreach (var job in App.Services.ConversionQueueRuntime.Snapshot.Jobs)
+        {
+            _media.Add(ImportedMediaRow.FromJob(job));
+        }
+        App.Services.ConversionQueueRuntime.Queue.Changed += OnQueueChanged;
+        Unloaded += OnUnloaded;
     }
 
     private void ApplyStrings()
@@ -94,7 +100,7 @@ public sealed partial class ConversionPage : Page
                     _media[index] = _media[index] with
                     {
                         JobId = job.Id,
-                        Summary = string.Concat(_media[index].Summary, " · ", App.Services.Localization.GetString("Conversion.Queued"))
+                        QueueStatus = QueueStatusText(MediaForge.Core.Jobs.ConversionJobStatus.Queued)
                     };
                 }
             }
@@ -117,6 +123,32 @@ public sealed partial class ConversionPage : Page
 
         App.Services.ConversionQueueRuntime.Queue.Clear();
         _media.Clear();
+    }
+
+    private void OnQueueChanged(object? sender, MediaForge.Core.Jobs.ConversionQueueChangedEventArgs args)
+    {
+        App.DispatcherQueue.TryEnqueue(() =>
+        {
+            var statuses = args.Snapshot.Jobs.ToDictionary(job => job.Id);
+            for (var index = 0; index < _media.Count; index++)
+            {
+                var row = _media[index];
+                if (row.JobId is not { } jobId || !statuses.TryGetValue(jobId, out var job))
+                {
+                    continue;
+                }
+                _media[index] = row with { QueueStatus = QueueStatusText(job.Status) };
+            }
+        });
+    }
+
+    internal static string QueueStatusText(MediaForge.Core.Jobs.ConversionJobStatus status) =>
+        App.Services.Localization.GetString($"Conversion.Status.{status}");
+
+    private void OnUnloaded(object sender, RoutedEventArgs args)
+    {
+        App.Services.ConversionQueueRuntime.Queue.Changed -= OnQueueChanged;
+        Unloaded -= OnUnloaded;
     }
 
     private async void OnAddFolderClick(object sender, RoutedEventArgs args)
@@ -213,13 +245,19 @@ public sealed record ImportedMediaRow(
     string FileName,
     string Summary,
     MediaForge.Core.Media.MediaSourceInfo? Source,
-    Guid? JobId)
+    Guid? JobId,
+    string? QueueStatus)
 {
     public static ImportedMediaRow Create(string path, MediaForge.Core.Media.MediaSourceInfo? media, string? error)
     {
         var summary = error ?? (media is null ? App.Services.Localization.GetString("Conversion.UnsupportedFile") : Format(media));
-        return new ImportedMediaRow(path, System.IO.Path.GetFileName(path), summary, media, null);
+        return new ImportedMediaRow(path, System.IO.Path.GetFileName(path), summary, media, null, null);
     }
+
+    public static ImportedMediaRow FromJob(MediaForge.Core.Jobs.ConversionJobSnapshot job) =>
+        new(job.InputPath, System.IO.Path.GetFileName(job.InputPath),
+            string.Format(App.Services.Localization.GetString("Conversion.Output"), job.OutputPath),
+            null, job.Id, ConversionPage.QueueStatusText(job.Status));
 
     private static string Format(MediaForge.Core.Media.MediaSourceInfo media)
     {

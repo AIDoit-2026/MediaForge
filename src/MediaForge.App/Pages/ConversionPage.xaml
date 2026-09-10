@@ -48,6 +48,7 @@
                         <StackPanel Padding="8" Spacing="2">
                             <TextBlock Text="{Binding FileName}" Style="{StaticResource SubtitleTextBlockStyle}" />
                             <TextBlock Text="{Binding Summary}" TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            <TextBlock Text="{Binding QueueStatus}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                         </StackPanel>
                     </DataTemplate>
                 </ListView.ItemTemplate>
