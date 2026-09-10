@@ -15,6 +15,7 @@ MVP 需求和设计已经确定，正在按照任务清单开发：
 - [需求文档](docs/Requirement.md)
 - [设计文档](docs/Design.md)
 - [任务清单](docs/Tasks.md)
+- [MVP 兼容矩阵](docs/CompatibilityMatrix.md)
 
 ## 开发流程记录
 

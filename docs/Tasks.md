@@ -8,7 +8,7 @@
 
 - [x] 记录产品决策并同步需求、设计和任务范围。
 - [x] 确认外部 SRT 烧录、Windows 10 1809 暂定下限及用户自备 FFmpeg。
-- [ ] 冻结其余 MVP 容器、视频编码器和音频编码器兼容矩阵。
+- [x] 冻结其余 MVP 容器、视频编码器和音频编码器兼容矩阵。
 - [ ] 做 unpackaged framework-dependent 发布原型，在干净的 Windows 10/11 环境验证：安装 .NET Desktop Runtime 与 Windows App Runtime 后可直接运行。
 - [ ] 验证系统托盘、单实例和关闭窗口隐藏行为在 unpackaged 模式下可用。
 - [x] 建立短小且可再分发的媒体测试样本及来源说明。
