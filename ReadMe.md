@@ -35,7 +35,8 @@ MVP 需求和设计已经确定，正在按照任务清单开发：
 ### 前置条件
 
 - Windows 10 1809（17763）或更新版本，x64。
-- .NET 10 SDK，以及可用于 WinUI 3 的 Windows App SDK 开发环境。
+- 开发时需要 .NET 10 SDK，以及可用于 WinUI 3 的 Windows App SDK 开发环境。
+- 运行发布版时需要预先安装 x64 .NET 10 Desktop Runtime 与 Windows App Runtime 1.8 或兼容更新版本；发布目录不再携带这些运行时。
 - 若要实际转换媒体，请自行准备同一套 FFmpeg 中的 `ffmpeg.exe` 与 `ffprobe.exe`。开发仓库中的 `ffmpeg/` 仅供本机测试，未纳入 Git 或发布包。
 
 ### Debug 编译与运行
@@ -50,14 +51,14 @@ dotnet build .\src\MediaForge.App\MediaForge.App.csproj -c Debug -p:Platform=x64
 
 这是 unpackaged WinUI 3 应用；请直接启动生成的 `MediaForge.exe`，而不是使用安装包或 MSIX 部署流程。
 
-### Release portable 发布与运行
+### Release framework-dependent 发布与运行
 
 ```powershell
 dotnet publish .\src\MediaForge.App\MediaForge.App.csproj -c Release -p:Platform=x64
-& .\artifacts\publish\win-x64\MediaForge.exe
+& .\artifacts\publish\framework-dependent-win-x64\MediaForge.exe
 ```
 
-发布结果位于 `artifacts\publish\win-x64\`，可整体复制到任意可写目录运行。首次运行会在该目录创建 `config\`，用于保存设置、队列和日志。
+发布结果位于 `artifacts\publish\framework-dependent-win-x64\`，可整体复制到任意可写目录运行。首次运行会在该目录创建 `config\`，用于保存设置、队列和日志。此发布方式依赖目标电脑已安装的 x64 .NET 10 Desktop Runtime 与 Windows App Runtime，未安装时应用无法启动。
 
 将 `ffmpeg.exe` 和 `ffprobe.exe` 一同复制到 `MediaForge.exe` 所在目录；或者启动应用后在“设置”页指定二者所在的目录。应用不会从 PATH 查找、下载或更新 FFmpeg。
 

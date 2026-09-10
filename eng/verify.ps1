@@ -38,7 +38,7 @@ Invoke-DotNet test $coreTests '-c' 'Release' '--no-restore' @commonArguments
 Write-Host 'Running integration tests...'
 Invoke-DotNet test $integrationTests '-c' 'Release' '--no-restore' @commonArguments
 
-Write-Host 'Publishing self-contained x64 portable application...'
+Write-Host 'Publishing framework-dependent x64 portable application...'
 Invoke-DotNet publish $appProject '-c' 'Release' '--no-restore' @commonArguments
 
 Write-Host 'Verification succeeded.'

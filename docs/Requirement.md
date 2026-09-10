@@ -16,7 +16,7 @@ MediaForge 是一款本地运行的桌面媒体转换工具。用户无需理解
 
 - 使用 C#、WinUI 3 和 Windows App SDK 开发。
 - 首版仅支持 Windows 10/11 x64。
-- 采用 unpackaged、自包含的 portable 文件夹发布；用户直接运行 `MediaForge.exe`。
+- 采用 unpackaged、framework-dependent 的 portable 文件夹发布；用户直接运行 `MediaForge.exe`，目标电脑需预先安装 x64 .NET Desktop Runtime 与 Windows App Runtime。
 - 所有用户设置保存在 `MediaForge.exe` 同级的 `config` 文件夹，不写入安装目录之外的应用配置位置。
 - 应用目录整体复制到另一台满足系统要求的电脑后，设置可随之迁移。
 - `config` 不可写时仍允许应用使用内置默认参数启动，但不持久化设置、队列和日志，并在主界面持续显示醒目警告。

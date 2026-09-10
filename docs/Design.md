@@ -15,7 +15,7 @@
 | 主题 | 决策 | 原因与影响 |
 | --- | --- | --- |
 | UI | C# + WinUI 3 + Windows App SDK | 满足需求并使用原生 Fluent 控件、主题和辅助功能能力 |
-| 发布 | unpackaged、x64、自包含 portable 文件夹 | 适合直接运行 exe 和随目录迁移配置；发布产物不是单文件 |
+| 发布 | unpackaged、x64、framework-dependent portable 文件夹 | 依赖目标电脑预装 .NET Desktop Runtime 与 Windows App Runtime；适合随目录迁移配置，发布产物不是单文件 |
 | 架构 | 单进程桌面应用，分层服务 + MVVM | 隔离 UI、队列状态、进程执行和持久化 |
 | FFmpeg 集成 | `System.Diagnostics.Process` 启动外部进程 | 边界清晰，便于替换 FFmpeg 并采集输出；避免 AutoGen 的本机 ABI 复杂度 |
 | 进程参数 | `ProcessStartInfo.ArgumentList` | 正确处理空格、Unicode 和特殊字符，避免 shell 拼接 |
@@ -243,7 +243,7 @@ public interface IConversionRunner
 | 风险 | 影响 | 应对 |
 | --- | --- | --- |
 | 用户提供的 FFmpeg 构建差异 | 某些编码器或滤镜不存在 | UI 以能力探测为准；所选功能缺失时明确要求更新或更换构建 |
-| WinUI 3 unpackaged 运行时依赖 | 干净机器上无法“解压即用” | 采用自包含 Windows App SDK 或随包 bootstrapper，并在干净环境验证 |
+| WinUI 3 unpackaged 运行时依赖 | 未安装运行时时无法启动 | 明确要求预装 .NET Desktop Runtime 与 Windows App Runtime，并在干净环境验证安装说明 |
 | 硬件编码器差异大 | 同一参数在不同 GPU/驱动失败 | 运行时探测、按编码器建参数模型、提供软件回退 |
 | 参数组合爆炸 | UI 难懂且大量组合无效 | 以预设为入口，能力驱动展示，中央验证器兜底 |
 | portable 目录不可写 | 配置、日志和队列无法保存 | 使用默认参数进入临时会话，并持续显示醒目提示 |
