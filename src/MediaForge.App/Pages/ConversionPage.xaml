@@ -11,6 +11,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
@@ -20,14 +21,20 @@
             <CommandBar.PrimaryCommands>
                 <AppBarButton x:Name="AddFilesButton" Icon="Add" Click="OnAddFilesClick" />
                 <AppBarButton x:Name="AddFolderButton" Icon="Folder" Click="OnAddFolderClick" />
-                <AppBarButton x:Name="StartButton" Icon="Play" />
+                <AppBarButton x:Name="StartButton" Icon="Play" Click="OnStartClick" />
             </CommandBar.PrimaryCommands>
             <CommandBar.SecondaryCommands>
                 <AppBarButton x:Name="ClearButton" Icon="Delete" />
             </CommandBar.SecondaryCommands>
         </CommandBar>
 
-        <Grid Grid.Row="2" RowSpacing="12">
+        <InfoBar
+            x:Name="ConversionStatusInfoBar"
+            Grid.Row="2"
+            IsClosable="True"
+            IsOpen="False" />
+
+        <Grid Grid.Row="3" RowSpacing="12">
             <Grid.RowDefinitions>
                 <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />

@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using MediaForge.Core.Ffmpeg;
 using MediaForge.Core.Importing;
 using MediaForge.Infrastructure.Ffmpeg;
 using MediaForge.Infrastructure.Importing;
@@ -42,6 +43,45 @@ public sealed partial class ConversionPage : Page
         WinRT.Interop.InitializeWithWindow.Initialize(picker, App.WindowHandle);
         var files = await picker.PickMultipleFilesAsync();
         await ProbeFilesAsync(files);
+    }
+
+    private async void OnStartClick(object sender, RoutedEventArgs args)
+    {
+        try
+        {
+            var settings = (await App.Services.SettingsStore.LoadAsync()).Settings;
+            var resolution = App.Services.FfmpegToolResolver.Resolve(settings.FfmpegDirectory);
+            if (!resolution.IsSuccess)
+            {
+                ShowStatus(App.Services.Localization.GetString("Conversion.ToolsNotFound"), InfoBarSeverity.Error);
+                return;
+            }
+
+            var capabilities = await App.Services.FfmpegCapabilityService.GetAsync(resolution.Toolset!, forceRefresh: false);
+            var guard = new FfmpegFeatureGuard();
+            var requirements = new[]
+            {
+                new FfmpegFeatureRequirement("MP4 output", FfmpegFeatureKind.Muxer, "mp4"),
+                new FfmpegFeatureRequirement("H.264 video encoding", FfmpegFeatureKind.Encoder, "libx264"),
+                new FfmpegFeatureRequirement("AAC audio encoding", FfmpegFeatureKind.Encoder, "aac")
+            };
+            var unsupported = requirements
+                .Select(requirement => guard.Check(capabilities, requirement))
+                .FirstOrDefault(result => !result.IsSupported);
+            if (unsupported is not null)
+            {
+                ShowStatus(string.Format(
+                    App.Services.Localization.GetString("Conversion.UnsupportedFeature"),
+                    unsupported.MissingCapability), InfoBarSeverity.Error);
+                return;
+            }
+
+            ShowStatus(App.Services.Localization.GetString("Conversion.ToolValidationPassed"), InfoBarSeverity.Success);
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException or InvalidOperationException)
+        {
+            ShowStatus(error.Message, InfoBarSeverity.Error);
+        }
     }
 
     private async void OnAddFolderClick(object sender, RoutedEventArgs args)
@@ -124,6 +164,13 @@ public sealed partial class ConversionPage : Page
     }
 
     private void AddError(string path, string error) => Add(path, null, error);
+
+    private void ShowStatus(string message, InfoBarSeverity severity)
+    {
+        ConversionStatusInfoBar.Message = message;
+        ConversionStatusInfoBar.Severity = severity;
+        ConversionStatusInfoBar.IsOpen = true;
+    }
 }
 
 public sealed record ImportedMediaRow(string Path, string FileName, string Summary)
