@@ -12,6 +12,8 @@ namespace MediaForge.App;
 /// </summary>
 public partial class App : Application
 {
+    private static readonly object ShutdownGate = new();
+    private static Task? _shutdownTask;
     /// <summary>
     /// The main application window. Use <c>App.Window</c> from any class that needs
     /// the window reference (for dialogs, pickers, interop, etc.).
@@ -34,6 +36,47 @@ public partial class App : Application
     /// </summary>
     public static nint WindowHandle =>
         WinRT.Interop.WindowNative.GetWindowHandle(Window);
+
+    internal static Task ShutdownAsync()
+    {
+        lock (ShutdownGate)
+        {
+            return _shutdownTask ??= ShutdownCoreAsync();
+        }
+    }
+
+    internal static async Task ExitAsync()
+    {
+        (Window as MainWindow)?.PrepareForExit();
+        await ShutdownAsync();
+        Application.Current.Exit();
+    }
+
+    private static async Task ShutdownCoreAsync()
+    {
+        if (Services is null)
+        {
+            return;
+        }
+
+        try
+        {
+            await Services.ConversionQueueRuntime.StopAndPersistAsync();
+            Services.Logger.Log(new ApplicationLogEntry(
+                DateTimeOffset.UtcNow,
+                ApplicationLogLevel.Information,
+                "ApplicationExited"));
+        }
+        catch (Exception error)
+        {
+            Services.Logger.LogError("ApplicationShutdownFailed", error, error.ToString());
+        }
+        finally
+        {
+            (Window as MainWindow)?.DisposeForExit();
+            Services.Dispose();
+        }
+    }
 
     /// <summary>
     /// Initializes the singleton application object.

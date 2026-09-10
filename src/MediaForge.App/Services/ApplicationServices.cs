@@ -111,10 +111,10 @@ public sealed class ApplicationServices : IDisposable
 
     public void Dispose()
     {
+        ConversionQueueRuntime.Dispose();
         if (Logger is IDisposable disposableLogger)
         {
             disposableLogger.Dispose();
         }
-        ConversionQueueRuntime.Dispose();
     }
 }

@@ -39,6 +39,8 @@ public sealed partial class ConversionPage : Page
         AddFolderButton.SetValue(Microsoft.UI.Xaml.Automation.AutomationProperties.NameProperty, AddFolderButton.Label);
         StartButton.Label = strings.GetString("Conversion.Start");
         ClearButton.Label = strings.GetString("Conversion.Clear");
+        ExitButton.Label = strings.GetString("Application.Exit");
+        ExitButton.SetValue(Microsoft.UI.Xaml.Automation.AutomationProperties.NameProperty, ExitButton.Label);
         EmptyTitleTextBlock.Text = strings.GetString("Conversion.EmptyTitle");
         EmptyDescriptionTextBlock.Text = strings.GetString("Conversion.EmptyDescription");
     }
@@ -126,6 +128,8 @@ public sealed partial class ConversionPage : Page
         App.Services.ConversionQueueRuntime.Queue.Clear();
         _media.Clear();
     }
+
+    private async void OnExitClick(object sender, RoutedEventArgs args) => await App.ExitAsync();
 
     private void OnQueueChanged(object? sender, MediaForge.Core.Jobs.ConversionQueueChangedEventArgs args)
     {

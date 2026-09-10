@@ -34,4 +34,7 @@
   <data name="Conversion.Output" xml:space="preserve"><value>Output: {0}</value></data><data name="Conversion.Status.Ready" xml:space="preserve"><value>Ready</value></data><data name="Conversion.Status.Queued" xml:space="preserve"><value>Queued</value></data><data name="Conversion.Status.Running" xml:space="preserve"><value>Converting</value></data><data name="Conversion.Status.Succeeded" xml:space="preserve"><value>Completed</value></data><data name="Conversion.Status.Failed" xml:space="preserve"><value>Failed</value></data><data name="Conversion.Status.Interrupted" xml:space="preserve"><value>Interrupted</value></data><data name="Conversion.Status.Skipped" xml:space="preserve"><value>Skipped</value></data>
   <data name="Conversion.ProgressUnknown" xml:space="preserve"><value>Progress unavailable</value></data>
   <data name="Conversion.Elapsed" xml:space="preserve"><value>elapsed</value></data><data name="Conversion.Remaining" xml:space="preserve"><value>about remaining</value></data><data name="Conversion.OverallProgress" xml:space="preserve"><value>Overall: {0}/{1} finished, {2:F0}%</value></data>
+  <data name="Application.Exit" xml:space="preserve"><value>Exit application</value></data>
+  <data name="Application.Tray.Open" xml:space="preserve"><value>Open window</value></data>
+  <data name="Application.Tray.Exit" xml:space="preserve"><value>Exit application</value></data>
 </root>

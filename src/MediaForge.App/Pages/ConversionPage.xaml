@@ -22,6 +22,7 @@
                 <AppBarButton x:Name="AddFilesButton" Icon="Add" Click="OnAddFilesClick" />
                 <AppBarButton x:Name="AddFolderButton" Icon="Folder" Click="OnAddFolderClick" />
                 <AppBarButton x:Name="StartButton" Icon="Play" Click="OnStartClick" />
+                <AppBarButton x:Name="ExitButton" Icon="Cancel" Click="OnExitClick" />
             </CommandBar.PrimaryCommands>
             <CommandBar.SecondaryCommands>
                 <AppBarButton x:Name="ClearButton" Icon="Delete" Click="OnClearClick" />
