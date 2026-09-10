@@ -35,4 +35,16 @@ public sealed class ConversionJobTests
 
         Assert.Contains("Ready", error.Message, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void A_running_job_can_be_skipped()
+    {
+        var job = new ConversionJob(Guid.NewGuid(), "input.mp4", "output.mkv", ConversionJobStatus.Ready);
+
+        job.Queue();
+        job.Start();
+        job.Skip();
+
+        Assert.Equal(ConversionJobStatus.Skipped, job.Status);
+    }
 }

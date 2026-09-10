@@ -49,11 +49,12 @@ public partial class App : Application
     /// Invoked when the application is launched.
     /// </summary>
     /// <param name="args">Details about the launch request and process.</param>
-    protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
+    protected override async void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
     {
         try
         {
             Services = ApplicationServices.Create(AppContext.BaseDirectory);
+            await Services.ConversionQueueRuntime.RestoreAsync();
             var mainWindow = new MainWindow();
             Window = mainWindow;
             DispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread();

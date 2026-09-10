@@ -76,12 +76,47 @@ public sealed partial class ConversionPage : Page
                 return;
             }
 
-            ShowStatus(App.Services.Localization.GetString("Conversion.ToolValidationPassed"), InfoBarSeverity.Success);
+            var sources = _media.Where(row => row.Source is not null && row.JobId is null)
+                .Select(row => row.Source!)
+                .ToArray();
+            if (sources.Length == 0)
+            {
+                ShowStatus(App.Services.Localization.GetString("Conversion.NoFilesToQueue"), InfoBarSeverity.Warning);
+                return;
+            }
+
+            var jobs = App.Services.ConversionQueueRuntime.AddDefaultJobs(sources, settings);
+            foreach (var job in jobs)
+            {
+                var index = _media.ToList().FindIndex(row => string.Equals(row.Path, job.InputPath, StringComparison.OrdinalIgnoreCase) && row.JobId is null);
+                if (index >= 0)
+                {
+                    _media[index] = _media[index] with
+                    {
+                        JobId = job.Id,
+                        Summary = string.Concat(_media[index].Summary, " · ", App.Services.Localization.GetString("Conversion.Queued"))
+                    };
+                }
+            }
+            await App.Services.ConversionQueueRuntime.StartAsync();
+            ShowStatus(string.Format(App.Services.Localization.GetString("Conversion.QueuedCount"), jobs.Count), InfoBarSeverity.Success);
         }
         catch (Exception error) when (error is IOException or UnauthorizedAccessException or InvalidOperationException)
         {
             ShowStatus(error.Message, InfoBarSeverity.Error);
         }
+    }
+
+    private void OnClearClick(object sender, RoutedEventArgs args)
+    {
+        if (App.Services.ConversionQueueRuntime.Snapshot.Jobs.Any(job => job.Status == MediaForge.Core.Jobs.ConversionJobStatus.Running))
+        {
+            ShowStatus(App.Services.Localization.GetString("Conversion.CannotClearRunning"), InfoBarSeverity.Warning);
+            return;
+        }
+
+        App.Services.ConversionQueueRuntime.Queue.Clear();
+        _media.Clear();
     }
 
     private async void OnAddFolderClick(object sender, RoutedEventArgs args)
@@ -173,12 +208,17 @@ public sealed partial class ConversionPage : Page
     }
 }
 
-public sealed record ImportedMediaRow(string Path, string FileName, string Summary)
+public sealed record ImportedMediaRow(
+    string Path,
+    string FileName,
+    string Summary,
+    MediaForge.Core.Media.MediaSourceInfo? Source,
+    Guid? JobId)
 {
     public static ImportedMediaRow Create(string path, MediaForge.Core.Media.MediaSourceInfo? media, string? error)
     {
         var summary = error ?? (media is null ? App.Services.Localization.GetString("Conversion.UnsupportedFile") : Format(media));
-        return new ImportedMediaRow(path, System.IO.Path.GetFileName(path), summary);
+        return new ImportedMediaRow(path, System.IO.Path.GetFileName(path), summary, media, null);
     }
 
     private static string Format(MediaForge.Core.Media.MediaSourceInfo media)

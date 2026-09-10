@@ -85,6 +85,24 @@ public sealed class ConversionQueueSchedulerTests
     }
 
     [Fact]
+    public async Task Executor_skip_marks_only_that_job_skipped()
+    {
+        var queue = CreateQueuedJobs(2);
+        var invocation = 0;
+        var scheduler = new ConversionQueueScheduler(queue, (_, _) =>
+        {
+            invocation++;
+            return invocation == 1
+                ? Task.FromException(new ConversionSkippedException())
+                : Task.CompletedTask;
+        });
+
+        await scheduler.StartQueuedJobsAsync().WaitAsync(TimeSpan.FromSeconds(2));
+
+        Assert.Equal([ConversionJobStatus.Skipped, ConversionJobStatus.Succeeded], queue.GetSnapshot().Jobs.Select(job => job.Status));
+    }
+
+    [Fact]
     public async Task Stop_cancels_running_work_marks_it_interrupted_and_does_not_start_more_jobs()
     {
         var queue = CreateQueuedJobs(2);

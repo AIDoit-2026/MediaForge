@@ -94,6 +94,8 @@ public sealed class ConversionQueueService
 
     public void Complete(Guid jobId) => Transition(jobId, job => job.Complete());
 
+    public void Skip(Guid jobId) => Transition(jobId, job => job.Skip());
+
     public void Fail(Guid jobId) => Transition(jobId, job => job.Fail());
 
     public void Interrupt(Guid jobId) => Transition(jobId, job => job.Interrupt());

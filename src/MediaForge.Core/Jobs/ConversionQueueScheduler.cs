@@ -163,6 +163,10 @@ public sealed class ConversionQueueScheduler : IConversionQueueScheduler
             await _executeAsync(job, _shutdownCancellation.Token);
             _queue.Complete(job.Id);
         }
+        catch (ConversionSkippedException)
+        {
+            _queue.Skip(job.Id);
+        }
         catch (OperationCanceledException) when (_shutdownCancellation.IsCancellationRequested)
         {
             _queue.Interrupt(job.Id);

@@ -24,7 +24,7 @@
                 <AppBarButton x:Name="StartButton" Icon="Play" Click="OnStartClick" />
             </CommandBar.PrimaryCommands>
             <CommandBar.SecondaryCommands>
-                <AppBarButton x:Name="ClearButton" Icon="Delete" />
+                <AppBarButton x:Name="ClearButton" Icon="Delete" Click="OnClearClick" />
             </CommandBar.SecondaryCommands>
         </CommandBar>
 

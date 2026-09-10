@@ -46,6 +46,8 @@ public sealed class ConversionJob
 
     public void Complete() => TransitionTo(ConversionJobStatus.Succeeded, ConversionJobStatus.Running);
 
+    public void Skip() => TransitionTo(ConversionJobStatus.Skipped, ConversionJobStatus.Running);
+
     public void Fail() => TransitionTo(ConversionJobStatus.Failed, ConversionJobStatus.Running);
 
     public void Interrupt() => TransitionTo(ConversionJobStatus.Interrupted, ConversionJobStatus.Running);

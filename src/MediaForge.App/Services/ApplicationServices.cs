@@ -26,7 +26,8 @@ public sealed class ApplicationServices : IDisposable
         IHardwareEncoderProbe hardwareEncoderProbe,
         IFfmpegProcessRunner ffmpegProcessRunner,
         LocalizationService localization,
-        ThemeService theme)
+        ThemeService theme,
+        ConversionQueueRuntime conversionQueueRuntime)
     {
         ApplicationPaths = applicationPaths;
         Logger = logger;
@@ -43,6 +44,7 @@ public sealed class ApplicationServices : IDisposable
         FfmpegProcessRunner = ffmpegProcessRunner;
         Localization = localization;
         Theme = theme;
+        ConversionQueueRuntime = conversionQueueRuntime;
     }
 
     public IApplicationPaths ApplicationPaths { get; }
@@ -75,28 +77,36 @@ public sealed class ApplicationServices : IDisposable
 
     public ThemeService Theme { get; }
 
+    public ConversionQueueRuntime ConversionQueueRuntime { get; }
+
     public static ApplicationServices Create(string baseDirectory)
     {
         var applicationPaths = PortableApplicationPaths.Create(baseDirectory);
         var logger = new JsonLineApplicationLogger(applicationPaths);
         var processRunner = new FfmpegProcessRunner();
         var manifestStore = new JobManifestStore(applicationPaths, new AtomicJsonFileStore());
+        var settingsStore = new ApplicationSettingsStore(applicationPaths, new AtomicJsonFileStore());
+        var queueStore = new QueueStore(applicationPaths, new AtomicJsonFileStore());
+        var conversionRunner = new FfmpegConversionRunner(processRunner, new OutputFileCommitter(), manifestStore);
+        var toolResolver = new FfmpegToolResolver(applicationPaths.BaseDirectory);
+        var capabilityService = new FfmpegCapabilityService(applicationPaths, new AtomicJsonFileStore(), processRunner);
         return new ApplicationServices(
             applicationPaths,
             logger,
-            new ApplicationSettingsStore(applicationPaths, new AtomicJsonFileStore()),
-            new QueueStore(applicationPaths, new AtomicJsonFileStore()),
+            settingsStore,
+            queueStore,
             new UserPresetStore(applicationPaths, new AtomicJsonFileStore()),
             manifestStore,
             new TemporaryOutputRecoveryService(manifestStore, new ManifestTemporaryOutputCleaner()),
-            new FfmpegConversionRunner(processRunner, new OutputFileCommitter(), manifestStore),
-            new FfmpegToolResolver(applicationPaths.BaseDirectory),
+            conversionRunner,
+            toolResolver,
             new FfmpegVersionReader(),
-            new FfmpegCapabilityService(applicationPaths, new AtomicJsonFileStore(), processRunner),
+            capabilityService,
             new HardwareEncoderProbe(),
             processRunner,
             new LocalizationService(),
-            new ThemeService());
+            new ThemeService(),
+            new ConversionQueueRuntime(settingsStore, queueStore, toolResolver, capabilityService, processRunner, conversionRunner));
     }
 
     public void Dispose()
@@ -105,5 +115,6 @@ public sealed class ApplicationServices : IDisposable
         {
             disposableLogger.Dispose();
         }
+        ConversionQueueRuntime.Dispose();
     }
 }
