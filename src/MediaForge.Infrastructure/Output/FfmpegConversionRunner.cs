@@ -12,12 +12,20 @@ namespace MediaForge.Infrastructure.Output;
 public sealed class FfmpegConversionRunner(
     IFfmpegProcessRunner processRunner,
     OutputFileCommitter outputCommitter,
-    IJobManifestStore? manifestStore = null) : IConversionRunner
+    IJobManifestStore? manifestStore = null) : IConversionProgressRunner
 {
     public async Task<ConversionExecutionResult> RunAsync(
         string ffmpegPath,
         FfmpegCommandPlan plan,
         OutputConflictPolicy conflictPolicy,
+        CancellationToken cancellationToken = default) =>
+        await RunWithProgressAsync(ffmpegPath, plan, conflictPolicy, null, cancellationToken);
+
+    public async Task<ConversionExecutionResult> RunWithProgressAsync(
+        string ffmpegPath,
+        FfmpegCommandPlan plan,
+        OutputConflictPolicy conflictPolicy,
+        IProgress<FfmpegProgressUpdate>? progress,
         CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(ffmpegPath);
@@ -39,7 +47,7 @@ public sealed class FfmpegConversionRunner(
             }
             foreach (var invocation in plan.Invocations)
             {
-                lastResult = await processRunner.RunAsync(ffmpegPath, invocation.Arguments, cancellationToken);
+                lastResult = await RunInvocationAsync(ffmpegPath, invocation.Arguments, progress, cancellationToken);
                 if (lastResult.ExitCode != 0)
                 {
                     DeleteTemporaryArtifacts(manifest);
@@ -92,6 +100,34 @@ public sealed class FfmpegConversionRunner(
                 await manifestStore.DeleteAsync(manifest.JobId, CancellationToken.None);
             }
         }
+    }
+
+    private Task<FfmpegProcessResult> RunInvocationAsync(
+        string ffmpegPath,
+        IReadOnlyList<string> arguments,
+        IProgress<FfmpegProgressUpdate>? progress,
+        CancellationToken cancellationToken)
+    {
+        if (progress is null || processRunner is not IStreamingFfmpegProcessRunner streamingRunner)
+        {
+            return processRunner.RunAsync(ffmpegPath, arguments, cancellationToken);
+        }
+
+        var parser = new FfmpegProgressParser();
+        var lines = new List<string>();
+        var progressArguments = new List<string> { "-progress", "pipe:1", "-stats_period", "0.5" };
+        progressArguments.AddRange(arguments);
+        return streamingRunner.RunWithOutputObserverAsync(
+            ffmpegPath,
+            progressArguments,
+            line =>
+            {
+                lines.Add(line);
+                if (!line.StartsWith("progress=", StringComparison.Ordinal)) return;
+                foreach (var update in parser.Parse(lines)) progress.Report(update);
+                lines.Clear();
+            },
+            cancellationToken);
     }
 
     private static void DeleteTemporaryArtifacts(JobManifest manifest)

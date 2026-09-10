@@ -43,6 +43,8 @@ public sealed class ConversionQueueRuntime : IDisposable
 
     public ConversionQueueService Queue { get; }
 
+    public event EventHandler<ConversionProgressChangedEventArgs>? ProgressChanged;
+
     public ConversionQueueSnapshot Snapshot => Queue.GetSnapshot();
 
     public async Task RestoreAsync(CancellationToken cancellationToken = default)
@@ -112,11 +114,12 @@ public sealed class ConversionQueueRuntime : IDisposable
             profile,
             DateTimeOffset.UtcNow,
             job.Id);
-        var result = await _conversionRunner.RunAsync(
-            toolset.FfmpegPath,
-            new FfmpegCommandBuilder().Build(spec),
-            settings.OutputConflictPolicy,
-            cancellationToken);
+        var plan = new FfmpegCommandBuilder().Build(spec);
+        var startedAt = DateTimeOffset.UtcNow;
+        var reporter = new Progress<FfmpegProgressUpdate>(update => ReportProgress(job.Id, source.Duration, startedAt, update));
+        var result = _conversionRunner is IConversionProgressRunner progressRunner
+            ? await progressRunner.RunWithProgressAsync(toolset.FfmpegPath, plan, settings.OutputConflictPolicy, reporter, cancellationToken)
+            : await _conversionRunner.RunAsync(toolset.FfmpegPath, plan, settings.OutputConflictPolicy, cancellationToken);
         if (result.Skipped)
         {
             throw new ConversionSkippedException();
@@ -129,6 +132,19 @@ public sealed class ConversionQueueRuntime : IDisposable
 
     private void OnQueueChanged(object? sender, ConversionQueueChangedEventArgs args) =>
         _debouncedStore.Schedule(Queue.CreateDocument());
+
+    private void ReportProgress(Guid jobId, TimeSpan? sourceDuration, DateTimeOffset startedAt, FfmpegProgressUpdate update)
+    {
+        double? percentage = sourceDuration is { Ticks: > 0 } && update.OutputTime is { } outputTime
+            ? Math.Clamp(outputTime.TotalMilliseconds / sourceDuration.Value.TotalMilliseconds * 100, 0, 100)
+            : null;
+        var now = DateTimeOffset.UtcNow;
+        TimeSpan? remaining = sourceDuration is { } duration && update.OutputTime is { } latestOutputTime && update.Speed is > 0
+            ? TimeSpan.FromSeconds(Math.Max(0, (duration - latestOutputTime).TotalSeconds / update.Speed.Value))
+            : null;
+        ProgressChanged?.Invoke(this, new ConversionProgressChangedEventArgs(new ConversionProgressSnapshot(
+            jobId, percentage, update.OutputTime, update.Speed, now - startedAt, remaining, now)));
+    }
 
     private static string CreateDefaultOutputPath(string sourcePath, string? outputDirectory)
     {

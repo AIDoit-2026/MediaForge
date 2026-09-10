@@ -25,6 +25,7 @@ public sealed partial class ConversionPage : Page
             _media.Add(ImportedMediaRow.FromJob(job));
         }
         App.Services.ConversionQueueRuntime.Queue.Changed += OnQueueChanged;
+        App.Services.ConversionQueueRuntime.ProgressChanged += OnProgressChanged;
         Unloaded += OnUnloaded;
     }
 
@@ -100,6 +101,7 @@ public sealed partial class ConversionPage : Page
                     _media[index] = _media[index] with
                     {
                         JobId = job.Id,
+                        JobStatus = MediaForge.Core.Jobs.ConversionJobStatus.Queued,
                         QueueStatus = QueueStatusText(MediaForge.Core.Jobs.ConversionJobStatus.Queued)
                     };
                 }
@@ -137,10 +139,59 @@ public sealed partial class ConversionPage : Page
                 {
                     continue;
                 }
-                _media[index] = row with { QueueStatus = QueueStatusText(job.Status) };
+                _media[index] = row with { JobStatus = job.Status, QueueStatus = QueueStatusText(job.Status) };
             }
+            UpdateOverallProgress();
         });
     }
+
+    private void OnProgressChanged(object? sender, MediaForge.App.Services.ConversionProgressChangedEventArgs args)
+    {
+        App.DispatcherQueue.TryEnqueue(() =>
+        {
+            for (var index = 0; index < _media.Count; index++)
+            {
+                if (_media[index].JobId != args.Progress.JobId) continue;
+                _media[index] = _media[index] with
+                {
+                    ProgressPercentage = args.Progress.Percentage ?? 0,
+                    ProgressVisibility = Visibility.Visible,
+                    ProgressText = FormatProgress(args.Progress, _media[index].Source?.Duration)
+                };
+                break;
+            }
+            UpdateOverallProgress();
+        });
+    }
+
+    private static string FormatProgress(MediaForge.App.Services.ConversionProgressSnapshot progress, TimeSpan? sourceDuration)
+    {
+        var percent = progress.Percentage is { } value ? $"{value:F0}%" : App.Services.Localization.GetString("Conversion.ProgressUnknown");
+        var speed = progress.Speed is { } multiplier ? $" · {multiplier:F2}x" : string.Empty;
+        var elapsed = $" · {App.Services.Localization.GetString("Conversion.Elapsed")} {progress.Elapsed:g}";
+        var remaining = progress.EstimatedRemaining is { } duration && sourceDuration is not null
+            ? $" · {App.Services.Localization.GetString("Conversion.Remaining")} {duration:g}"
+            : string.Empty;
+        return string.Concat(percent, speed, elapsed, remaining);
+    }
+
+    private void UpdateOverallProgress()
+    {
+        var jobs = _media.Where(row => row.JobId is not null).ToArray();
+        OverallProgressPanel.Visibility = jobs.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
+        if (jobs.Length == 0) return;
+
+        var value = jobs.Average(row => row.JobStatus is { } status && IsTerminalStatus(status) ? 100 : row.ProgressPercentage);
+        OverallProgressBar.Value = value;
+        OverallProgressTextBlock.Text = string.Format(App.Services.Localization.GetString("Conversion.OverallProgress"),
+            jobs.Count(row => row.JobStatus is { } status && IsTerminalStatus(status)), jobs.Length, value);
+    }
+
+    private static bool IsTerminalStatus(MediaForge.Core.Jobs.ConversionJobStatus status) => status is
+        MediaForge.Core.Jobs.ConversionJobStatus.Succeeded or
+        MediaForge.Core.Jobs.ConversionJobStatus.Failed or
+        MediaForge.Core.Jobs.ConversionJobStatus.Skipped or
+        MediaForge.Core.Jobs.ConversionJobStatus.Interrupted;
 
     internal static string QueueStatusText(MediaForge.Core.Jobs.ConversionJobStatus status) =>
         App.Services.Localization.GetString($"Conversion.Status.{status}");
@@ -148,6 +199,7 @@ public sealed partial class ConversionPage : Page
     private void OnUnloaded(object sender, RoutedEventArgs args)
     {
         App.Services.ConversionQueueRuntime.Queue.Changed -= OnQueueChanged;
+        App.Services.ConversionQueueRuntime.ProgressChanged -= OnProgressChanged;
         Unloaded -= OnUnloaded;
     }
 
@@ -246,18 +298,22 @@ public sealed record ImportedMediaRow(
     string Summary,
     MediaForge.Core.Media.MediaSourceInfo? Source,
     Guid? JobId,
-    string? QueueStatus)
+    MediaForge.Core.Jobs.ConversionJobStatus? JobStatus,
+    string? QueueStatus,
+    double ProgressPercentage,
+    Visibility ProgressVisibility,
+    string? ProgressText)
 {
     public static ImportedMediaRow Create(string path, MediaForge.Core.Media.MediaSourceInfo? media, string? error)
     {
         var summary = error ?? (media is null ? App.Services.Localization.GetString("Conversion.UnsupportedFile") : Format(media));
-        return new ImportedMediaRow(path, System.IO.Path.GetFileName(path), summary, media, null, null);
+        return new ImportedMediaRow(path, System.IO.Path.GetFileName(path), summary, media, null, null, null, 0, Visibility.Collapsed, null);
     }
 
     public static ImportedMediaRow FromJob(MediaForge.Core.Jobs.ConversionJobSnapshot job) =>
         new(job.InputPath, System.IO.Path.GetFileName(job.InputPath),
             string.Format(App.Services.Localization.GetString("Conversion.Output"), job.OutputPath),
-            null, job.Id, ConversionPage.QueueStatusText(job.Status));
+            null, job.Id, job.Status, ConversionPage.QueueStatusText(job.Status), 0, Visibility.Collapsed, null);
 
     private static string Format(MediaForge.Core.Media.MediaSourceInfo media)
     {

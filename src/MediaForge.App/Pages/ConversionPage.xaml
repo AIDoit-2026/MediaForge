@@ -28,11 +28,16 @@
             </CommandBar.SecondaryCommands>
         </CommandBar>
 
-        <InfoBar
-            x:Name="ConversionStatusInfoBar"
-            Grid.Row="2"
-            IsClosable="True"
-            IsOpen="False" />
+        <StackPanel Grid.Row="2" Spacing="6">
+            <InfoBar
+                x:Name="ConversionStatusInfoBar"
+                IsClosable="True"
+                IsOpen="False" />
+            <StackPanel x:Name="OverallProgressPanel" Visibility="Collapsed" Spacing="2">
+                <TextBlock x:Name="OverallProgressTextBlock" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <ProgressBar x:Name="OverallProgressBar" Maximum="100" />
+            </StackPanel>
+        </StackPanel>
 
         <Grid Grid.Row="3" RowSpacing="12">
             <Grid.RowDefinitions>
@@ -49,6 +54,8 @@
                             <TextBlock Text="{Binding FileName}" Style="{StaticResource SubtitleTextBlockStyle}" />
                             <TextBlock Text="{Binding Summary}" TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                             <TextBlock Text="{Binding QueueStatus}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            <ProgressBar Value="{Binding ProgressPercentage}" Maximum="100" Visibility="{Binding ProgressVisibility}" />
+                            <TextBlock Text="{Binding ProgressText}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                         </StackPanel>
                     </DataTemplate>
                 </ListView.ItemTemplate>

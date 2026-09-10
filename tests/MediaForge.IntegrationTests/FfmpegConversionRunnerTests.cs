@@ -63,6 +63,28 @@ public sealed class FfmpegConversionRunnerTests : IDisposable
         Assert.Equal(0, process.CallCount);
     }
 
+    [Fact]
+    public async Task Progress_execution_adds_machine_readable_progress_arguments_and_reports_updates()
+    {
+        Directory.CreateDirectory(_root);
+        var output = Path.Combine(_root, "out.mp4");
+        var temporary = TemporaryOutputPathFactory.Create(output, Guid.NewGuid());
+        var process = new ProgressWritingProcessRunner();
+        var runner = new FfmpegConversionRunner(process, new OutputFileCommitter());
+        var updates = new List<FfmpegProgressUpdate>();
+
+        var result = await runner.RunWithProgressAsync(
+            "ffmpeg.exe", Plan(output, temporary), OutputConflictPolicy.AutoRename,
+            new InlineProgress<FfmpegProgressUpdate>(updates.Add));
+
+        Assert.True(result.Succeeded);
+        Assert.Contains("-progress", process.Arguments);
+        Assert.Contains("pipe:1", process.Arguments);
+        var update = Assert.Single(updates);
+        Assert.Equal(TimeSpan.FromSeconds(2), update.OutputTime);
+        Assert.Equal(1.5, update.Speed);
+    }
+
     public void Dispose()
     {
         if (Directory.Exists(_root)) Directory.Delete(_root, recursive: true);
@@ -95,5 +117,32 @@ public sealed class FfmpegConversionRunnerTests : IDisposable
     {
         public Task<FfmpegProcessResult> RunAsync(string executablePath, IReadOnlyList<string> arguments, CancellationToken cancellationToken = default) =>
             Task.FromResult(new FfmpegProcessResult(12, string.Empty, "failed"));
+    }
+
+    private sealed class ProgressWritingProcessRunner : IStreamingFfmpegProcessRunner
+    {
+        public IReadOnlyList<string> Arguments { get; private set; } = [];
+
+        public Task<FfmpegProcessResult> RunAsync(string executablePath, IReadOnlyList<string> arguments, CancellationToken cancellationToken = default) =>
+            throw new InvalidOperationException("The progress path should use streaming output.");
+
+        public Task<FfmpegProcessResult> RunWithOutputObserverAsync(
+            string executablePath,
+            IReadOnlyList<string> arguments,
+            Action<string>? standardOutputLine,
+            CancellationToken cancellationToken = default)
+        {
+            Arguments = arguments;
+            standardOutputLine?.Invoke("out_time_us=2000000");
+            standardOutputLine?.Invoke("speed=1.5x");
+            standardOutputLine?.Invoke("progress=end");
+            File.WriteAllText(arguments[^1], "converted");
+            return Task.FromResult(new FfmpegProcessResult(0, string.Empty, string.Empty));
+        }
+    }
+
+    private sealed class InlineProgress<T>(Action<T> report) : IProgress<T>
+    {
+        public void Report(T value) => report(value);
     }
 }
