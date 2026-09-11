@@ -46,18 +46,36 @@
                 </ComboBox>
 
                 <TextBlock x:Name="FfmpegDirectoryLabel" Grid.Row="2" VerticalAlignment="Center" />
-                <TextBox
-                    x:Name="FfmpegDirectoryTextBox"
-                    Grid.Row="2"
-                    Grid.Column="1"
-                    />
+                <Grid Grid.Row="2" Grid.Column="1" ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBox
+                        x:Name="FfmpegDirectoryTextBox"
+                        Grid.Column="0" />
+                    <Button
+                        x:Name="FfmpegDirectoryBrowseButton"
+                        Grid.Column="1"
+                        Content="..."
+                        Click="OnFfmpegDirectoryBrowseClick" />
+                </Grid>
 
                 <TextBlock x:Name="DefaultOutputDirectoryLabel" Grid.Row="3" VerticalAlignment="Center" />
-                <TextBox
-                    x:Name="DefaultOutputDirectoryTextBox"
-                    Grid.Row="3"
-                    Grid.Column="1"
-                    />
+                <Grid Grid.Row="3" Grid.Column="1" ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBox
+                        x:Name="DefaultOutputDirectoryTextBox"
+                        Grid.Column="0" />
+                    <Button
+                        x:Name="DefaultOutputDirectoryBrowseButton"
+                        Grid.Column="1"
+                        Content="..."
+                        Click="OnDefaultOutputDirectoryBrowseClick" />
+                </Grid>
 
                 <TextBlock x:Name="ConflictPolicyLabel" Grid.Row="4" VerticalAlignment="Center" />
                 <ComboBox x:Name="ConflictPolicyComboBox" Grid.Row="4" Grid.Column="1" SelectedIndex="2">

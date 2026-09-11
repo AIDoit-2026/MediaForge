@@ -1,6 +1,7 @@
 using MediaForge.Core.Configuration;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Windows.Storage.Pickers;
 
 namespace MediaForge.App.Pages;
 
@@ -31,9 +32,11 @@ public sealed partial class SettingsPage : Page
         FfmpegDirectoryLabel.Text = strings.GetString("FfmpegDirectoryLabel.Text");
         FfmpegDirectoryTextBox.PlaceholderText = strings.GetString("FfmpegDirectoryTextBox.PlaceholderText");
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(FfmpegDirectoryTextBox, strings.GetString("FfmpegDirectoryTextBox.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name"));
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(FfmpegDirectoryBrowseButton, strings.GetString("FfmpegDirectoryBrowseButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name"));
         DefaultOutputDirectoryLabel.Text = strings.GetString("DefaultOutputDirectoryLabel.Text");
         DefaultOutputDirectoryTextBox.PlaceholderText = strings.GetString("DefaultOutputDirectoryTextBox.PlaceholderText");
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(DefaultOutputDirectoryTextBox, strings.GetString("DefaultOutputDirectoryTextBox.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name"));
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(DefaultOutputDirectoryBrowseButton, strings.GetString("DefaultOutputDirectoryBrowseButton.[using:Microsoft.UI.Xaml.Automation]AutomationProperties.Name"));
         ConflictPolicyLabel.Text = strings.GetString("ConflictPolicyLabel.Text");
         SkipConflictOption.Content = strings.GetString("SkipConflictOption.Content");
         OverwriteConflictOption.Content = strings.GetString("OverwriteConflictOption.Content");
@@ -90,6 +93,23 @@ public sealed partial class SettingsPage : Page
         App.Services.Theme.Apply(_settings.Theme, App.Window.Content as FrameworkElement);
         ShowStatus(Strings("Settings.Saved"), InfoBarSeverity.Success);
         (App.Window as MainWindow)?.RefreshShell();
+    }
+
+    private async void OnFfmpegDirectoryBrowseClick(object sender, RoutedEventArgs args) =>
+        await PickDirectoryAsync(FfmpegDirectoryTextBox);
+
+    private async void OnDefaultOutputDirectoryBrowseClick(object sender, RoutedEventArgs args) =>
+        await PickDirectoryAsync(DefaultOutputDirectoryTextBox);
+
+    private static async Task PickDirectoryAsync(TextBox target)
+    {
+        var picker = new FolderPicker();
+        WinRT.Interop.InitializeWithWindow.Initialize(picker, App.WindowHandle);
+        var folder = await picker.PickSingleFolderAsync();
+        if (folder is not null)
+        {
+            target.Text = folder.Path;
+        }
     }
 
     private void ShowStatus(string message, InfoBarSeverity severity)
