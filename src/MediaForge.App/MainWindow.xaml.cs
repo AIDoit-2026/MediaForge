@@ -23,7 +23,7 @@ public sealed partial class MainWindow : Window
     private const int SwHide = 0;
     private const int SwShow = 5;
     private static readonly SizeInt32 MinimumWindowSize = new(800, 600);
-    private static readonly SizeInt32 DefaultWindowSize = new(1200, 800);
+    private static readonly SizeInt32 DefaultWindowSize = new(1680, 800);
     private readonly nint _windowHandle;
     private readonly WindowProc _windowProc;
     private bool _enforcingMinimumSize;

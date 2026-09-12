@@ -17,7 +17,7 @@ public sealed class ConfigurationDocumentTests
         Assert.Equal(OutputConflictPolicy.AutoRename, settings.OutputConflictPolicy);
         Assert.Equal(1, settings.MaxConcurrentJobs);
         Assert.Equal(FileNameFilterMode.All, settings.LastFolderImport.FilterMode);
-        Assert.Equal(1200, settings.WindowWidth);
+        Assert.Equal(1680, settings.WindowWidth);
         Assert.Equal(800, settings.WindowHeight);
     }
 

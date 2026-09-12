@@ -23,6 +23,6 @@ public sealed record ApplicationSettings(
         OutputConflictPolicy: OutputConflictPolicy.AutoRename,
         MaxConcurrentJobs: 1,
         LastFolderImport: FolderImportSettings.CreateDefault(),
-        WindowWidth: 1200,
+        WindowWidth: 1680,
         WindowHeight: 800);
 }

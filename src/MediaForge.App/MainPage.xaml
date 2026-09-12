@@ -29,7 +29,7 @@
             IsSettingsVisible="True"
             PaneDisplayMode="Auto"
             CompactModeThresholdWidth="900"
-            ExpandedModeThresholdWidth="1200"
+            ExpandedModeThresholdWidth="1680"
             SelectionChanged="OnNavigationSelectionChanged">
             <NavigationView.MenuItems>
                 <NavigationViewItem x:Name="ConversionNavigationItem" IsSelected="True" Tag="conversion">

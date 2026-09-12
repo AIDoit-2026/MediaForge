@@ -1,10 +1,8 @@
 {
   "profiles": {
-    "MediaForge.App (Package)": {
-      "commandName": "MsixPackage"
-    },
-    "MediaForge.App (Unpackaged)": {
-      "commandName": "Project"
+    "MediaForge.App": {
+      "commandName": "Project",
+      "nativeDebugging": true
     }
   }
 }
