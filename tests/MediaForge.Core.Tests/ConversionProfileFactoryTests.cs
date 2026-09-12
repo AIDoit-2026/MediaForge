@@ -81,4 +81,18 @@ public sealed class ConversionProfileFactoryTests
             Assert.Equal(preset.Parameters.OutputContainer, profile.OutputContainer);
         }
     }
+
+    [Fact]
+    public void Built_in_mp3_preset_encodes_audio_only_with_libmp3lame()
+    {
+        var preset = Assert.Single(BuiltInPresetCatalog.All, item => item.Parameters.OutputContainer == "mp3");
+
+        var profile = ConversionProfileFactory.Create(preset.Parameters);
+
+        Assert.Equal("MP3 Audio", preset.Name);
+        Assert.Equal(StreamProcessingMode.Exclude, profile.Video.Mode);
+        Assert.Equal(StreamProcessingMode.Encode, profile.Audio.Mode);
+        Assert.Equal("libmp3lame", profile.Audio.Encoder);
+        Assert.Equal(192, profile.Audio.BitrateKbps);
+    }
 }

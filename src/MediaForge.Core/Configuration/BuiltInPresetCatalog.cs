@@ -36,6 +36,16 @@ public static class BuiltInPresetCatalog
                 ["videoMode"] = "none",
                 ["audioEncoder"] = "aac",
                 ["audioBitrateKbps"] = "192"
+            })),
+        new PresetDocument(
+            PresetDocument.CurrentSchemaVersion,
+            Guid.Parse("4a97e7f4-2e87-4ebf-95bb-f7f2cb0fb6a4"),
+            "MP3 Audio",
+            new ConversionParameterSnapshot("mp3", new Dictionary<string, string>
+            {
+                ["videoMode"] = "none",
+                ["audioEncoder"] = "libmp3lame",
+                ["audioBitrateKbps"] = "192"
             }))
     ];
 
