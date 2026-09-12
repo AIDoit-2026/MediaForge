@@ -16,9 +16,16 @@ public sealed partial class MainPage : Page
         ViewModel = new MainPageViewModel();
         InitializeComponent();
         ApplyStrings();
+        Loaded += OnLoaded;
         var page = initialPage ?? typeof(ConversionPage);
         ContentFrame.Navigate(page);
         RootNavigation.SelectedItem = page == typeof(PresetsPage) ? PresetsNavigationItem : ConversionNavigationItem;
+    }
+
+    private void OnLoaded(object sender, Microsoft.UI.Xaml.RoutedEventArgs args)
+    {
+        Loaded -= OnLoaded;
+        ApplyStrings();
     }
 
     public void Initialize(IApplicationPaths applicationPaths) =>

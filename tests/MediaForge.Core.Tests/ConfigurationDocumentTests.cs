@@ -83,8 +83,14 @@ public sealed class ConfigurationDocumentTests
             {
                 Assert.Equal("仅音频", audioOnly.Name);
                 Assert.Equal("none", audioOnly.Parameters.Values["videoMode"]);
+            },
+            mp3 =>
+            {
+                Assert.Equal("MP3 Audio", mp3.Name);
+                Assert.Equal("mp3", mp3.Parameters.OutputContainer);
+                Assert.Equal("libmp3lame", mp3.Parameters.Values["audioEncoder"]);
             });
 
-        Assert.Equal(3, presets.Select(preset => preset.Id).Distinct().Count());
+        Assert.Equal(4, presets.Select(preset => preset.Id).Distinct().Count());
     }
 }
