@@ -6,6 +6,7 @@ using MediaForge.Core.Media;
 using MediaForge.Infrastructure.Configuration;
 using MediaForge.Infrastructure.Ffmpeg;
 using MediaForge.Infrastructure.Output;
+using System.Runtime.ExceptionServices;
 
 namespace MediaForge.App.Services;
 
@@ -99,8 +100,21 @@ public sealed class ConversionQueueRuntime : IDisposable
 
     public async Task StopAndPersistAsync(CancellationToken cancellationToken = default)
     {
-        await _scheduler.StopAsync();
+        Exception? stopFailure = null;
+        try
+        {
+            await _scheduler.StopAsync();
+        }
+        catch (TimeoutException error)
+        {
+            stopFailure = error;
+        }
+
         await _debouncedStore.FlushAsync(Queue.CreateDocument(), cancellationToken);
+        if (stopFailure is not null)
+        {
+            ExceptionDispatchInfo.Capture(stopFailure).Throw();
+        }
     }
 
     private async Task ExecuteAsync(ConversionJobSnapshot job, CancellationToken cancellationToken)

@@ -62,12 +62,13 @@ public sealed class JsonLineApplicationLogger : IApplicationLogger, IDisposable
 
         _isDisposed = true;
         _entries.Writer.TryComplete();
-        _writerTask.GetAwaiter().GetResult();
+        // Disposal is called from the UI shutdown path; never wait indefinitely on file I/O.
+        _writerTask.Wait(TimeSpan.FromSeconds(1));
     }
 
     private async Task WriteEntriesAsync()
     {
-        await foreach (var entry in _entries.Reader.ReadAllAsync())
+        await foreach (var entry in _entries.Reader.ReadAllAsync().ConfigureAwait(false))
         {
             if (_logPath is null)
             {
@@ -82,7 +83,8 @@ public sealed class JsonLineApplicationLogger : IApplicationLogger, IDisposable
                 RotateIfRequired();
                 await File.AppendAllTextAsync(
                     _logPath,
-                    JsonSerializer.Serialize(entry, SerializerOptions) + Environment.NewLine);
+                    JsonSerializer.Serialize(entry, SerializerOptions) + Environment.NewLine)
+                    .ConfigureAwait(false);
             }
             catch (Exception error) when (error is IOException or UnauthorizedAccessException)
             {

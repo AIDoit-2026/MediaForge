@@ -66,6 +66,8 @@ public sealed class AtomicJsonFileStoreTests : IDisposable
             DefaultOutputDirectory = "D:\\Converted",
             OutputConflictPolicy = OutputConflictPolicy.Skip,
             MaxConcurrentJobs = 3,
+            WindowWidth = 1280,
+            WindowHeight = 720,
             LastFolderImport = new FolderImportSettings(
                 "D:\\Media",
                 IncludeSubdirectories: false,

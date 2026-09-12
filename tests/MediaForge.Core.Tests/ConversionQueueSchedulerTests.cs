@@ -124,6 +124,28 @@ public sealed class ConversionQueueSchedulerTests
         Assert.False(drain.IsCompleted);
     }
 
+    [Fact]
+    public async Task Stop_times_out_when_an_executor_ignores_cancellation()
+    {
+        var queue = CreateQueuedJobs(1);
+        var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var neverCompletes = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var scheduler = new ConversionQueueScheduler(
+            queue,
+            (_, _) =>
+            {
+                started.TrySetResult();
+                return neverCompletes.Task;
+            },
+            stopTimeout: TimeSpan.FromMilliseconds(50));
+
+        _ = scheduler.StartQueuedJobsAsync();
+        await started.Task.WaitAsync(TimeSpan.FromSeconds(2));
+
+        await Assert.ThrowsAsync<TimeoutException>(() => scheduler.StopAsync());
+        neverCompletes.TrySetResult();
+    }
+
     private static ConversionQueueService CreateQueuedJobs(int count)
     {
         var queue = new ConversionQueueService();

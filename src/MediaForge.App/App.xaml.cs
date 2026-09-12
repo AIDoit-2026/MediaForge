@@ -12,6 +12,7 @@ namespace MediaForge.App;
 /// </summary>
 public partial class App : Application
 {
+    private static readonly TimeSpan ExitTimeout = TimeSpan.FromSeconds(5);
     private static readonly object ShutdownGate = new();
     private static Task? _shutdownTask;
     /// <summary>
@@ -48,8 +49,35 @@ public partial class App : Application
     internal static async Task ExitAsync()
     {
         (Window as MainWindow)?.PrepareForExit();
+        try
+        {
+            var shutdown = ExitCoreAsync();
+            await shutdown.WaitAsync(ExitTimeout);
+        }
+        catch (TimeoutException)
+        {
+            Services?.Logger.Log(new ApplicationLogEntry(
+                DateTimeOffset.UtcNow,
+                ApplicationLogLevel.Warning,
+                "ApplicationExitTimedOut"));
+        }
+        catch (Exception error)
+        {
+            Services?.Logger.LogError("ApplicationExitFailed", error, error.ToString());
+        }
+        finally
+        {
+            Application.Current.Exit();
+        }
+    }
+
+    private static async Task ExitCoreAsync()
+    {
+        if (Window is MainWindow mainWindow)
+        {
+            await mainWindow.SaveWindowSettingsAsync();
+        }
         await ShutdownAsync();
-        Application.Current.Exit();
     }
 
     private static async Task ShutdownCoreAsync()
@@ -134,6 +162,7 @@ public partial class App : Application
             }
 
             mainWindow.Initialize(Services.ApplicationPaths);
+            mainWindow.ApplyWindowSettings(settings.Settings);
             Services.Theme.Apply(settings.Settings.Theme, mainWindow.Content as FrameworkElement);
         }
         catch (Exception error)

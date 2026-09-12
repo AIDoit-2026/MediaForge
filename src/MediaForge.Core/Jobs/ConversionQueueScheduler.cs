@@ -6,9 +6,11 @@ namespace MediaForge.Core.Jobs;
 /// </summary>
 public sealed class ConversionQueueScheduler : IConversionQueueScheduler
 {
+    private static readonly TimeSpan StopTimeout = TimeSpan.FromSeconds(10);
     private readonly object _gate = new();
     private readonly ConversionQueueService _queue;
     private readonly Func<ConversionJobSnapshot, CancellationToken, Task> _executeAsync;
+    private readonly TimeSpan _stopTimeout;
     private readonly HashSet<Guid> _runningJobIds = [];
     private readonly Dictionary<Guid, TaskCompletionSource> _runningCompletions = [];
     private readonly CancellationTokenSource _shutdownCancellation = new();
@@ -20,14 +22,20 @@ public sealed class ConversionQueueScheduler : IConversionQueueScheduler
     public ConversionQueueScheduler(
         ConversionQueueService queue,
         Func<ConversionJobSnapshot, CancellationToken, Task> executeAsync,
-        int maximumConcurrency = 1)
+        int maximumConcurrency = 1,
+        TimeSpan? stopTimeout = null)
     {
         ArgumentNullException.ThrowIfNull(queue);
         ArgumentNullException.ThrowIfNull(executeAsync);
         ValidateConcurrency(maximumConcurrency);
+        if (stopTimeout.HasValue && stopTimeout.Value <= TimeSpan.Zero)
+        {
+            throw new ArgumentOutOfRangeException(nameof(stopTimeout), "The stop timeout must be positive.");
+        }
         _queue = queue;
         _executeAsync = executeAsync;
         _maximumConcurrency = maximumConcurrency;
+        _stopTimeout = stopTimeout ?? StopTimeout;
     }
 
     public int MaximumConcurrency
@@ -75,7 +83,12 @@ public sealed class ConversionQueueScheduler : IConversionQueueScheduler
             runningTasks = _runningCompletions.Values.Select(completion => completion.Task).ToArray();
         }
 
-        await Task.WhenAll(runningTasks).ConfigureAwait(false);
+        if (runningTasks.Length == 0)
+        {
+            return;
+        }
+
+        await Task.WhenAll(runningTasks).WaitAsync(_stopTimeout).ConfigureAwait(false);
     }
 
     private void RequestPump()

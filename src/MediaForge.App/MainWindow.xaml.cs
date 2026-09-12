@@ -18,9 +18,12 @@ public sealed partial class MainWindow : Window
 {
     private const int GwlpWndProc = -4;
     private const uint WmClose = 0x0010;
+    private const uint WmSize = 0x0005;
+    private const int SizeMinimized = 1;
     private const int SwHide = 0;
     private const int SwShow = 5;
-    private static readonly SizeInt32 MinimumWindowSize = new(720, 520);
+    private static readonly SizeInt32 MinimumWindowSize = new(800, 600);
+    private static readonly SizeInt32 DefaultWindowSize = new(1200, 800);
     private readonly nint _windowHandle;
     private readonly WindowProc _windowProc;
     private bool _enforcingMinimumSize;
@@ -42,7 +45,7 @@ public sealed partial class MainWindow : Window
         SetTitleBar(AppTitleBar);
 
         AppWindow.SetIcon(Path.Combine(AppContext.BaseDirectory, "Assets", "AppIcon.ico"));
-        AppWindow.Resize(MinimumWindowSize);
+        AppWindow.Resize(DefaultWindowSize);
         AppWindow.Changed += OnAppWindowChanged;
     }
 
@@ -66,6 +69,25 @@ public sealed partial class MainWindow : Window
                 _trayIcon.RegistrationError.ToString()));
         }
         UpdateTrayStrings();
+    }
+
+    public void ApplyWindowSettings(ApplicationSettings settings)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+        AppWindow.Resize(new SizeInt32(
+            Math.Max(settings.WindowWidth, MinimumWindowSize.Width),
+            Math.Max(settings.WindowHeight, MinimumWindowSize.Height)));
+    }
+
+    public async Task SaveWindowSettingsAsync()
+    {
+        var size = AppWindow.Size;
+        var settings = (await App.Services.SettingsStore.LoadAsync()).Settings;
+        await App.Services.SettingsStore.SaveAsync(settings with
+        {
+            WindowWidth = Math.Max(size.Width, MinimumWindowSize.Width),
+            WindowHeight = Math.Max(size.Height, MinimumWindowSize.Height)
+        });
     }
 
     public void RefreshShell()
@@ -151,6 +173,12 @@ public sealed partial class MainWindow : Window
         }
 
         if (message == WmClose && !_exitRequested)
+        {
+            ShowWindow(hWnd, SwHide);
+            return 0;
+        }
+
+        if (message == WmSize && wParam.ToInt64() == SizeMinimized && !_exitRequested)
         {
             ShowWindow(hWnd, SwHide);
             return 0;

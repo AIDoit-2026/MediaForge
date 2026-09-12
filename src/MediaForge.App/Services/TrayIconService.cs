@@ -16,8 +16,8 @@ public sealed class TrayIconService : IDisposable
     private const uint NifTip = 0x00000004;
     private const uint WmLButtonDblClk = 0x0203;
     private const uint WmRButtonUp = 0x0205;
+    private const uint WmContextMenu = 0x007B;
     private const uint TpmRetCmd = 0x0100;
-    private const uint TpmNonotify = 0x0080;
     private const uint ImageIcon = 1;
     private const uint LrLoadFromFile = 0x00000010;
     private const uint LrDefaultSize = 0x00000040;
@@ -99,12 +99,14 @@ public sealed class TrayIconService : IDisposable
             return false;
         }
 
-        var mouseMessage = unchecked((uint)lParam.ToInt64());
+        // NOTIFYICON_VERSION_4 packs the mouse message into LOWORD(lParam)
+        // and the icon identifier into HIWORD(lParam).
+        var mouseMessage = unchecked((uint)lParam.ToInt64()) & 0xFFFF;
         if (mouseMessage == WmLButtonDblClk)
         {
             _showWindow();
         }
-        else if (mouseMessage == WmRButtonUp)
+        else if (mouseMessage is WmRButtonUp or WmContextMenu)
         {
             ShowMenu();
         }
@@ -143,12 +145,11 @@ public sealed class TrayIconService : IDisposable
             AppendMenu(menu, 0, (nuint)ExitCommand, _exitLabel);
             GetCursorPos(out var point);
             SetForegroundWindow(_windowHandle);
-            var command = TrackPopupMenu(
+            var command = TrackPopupMenuEx(
                 menu,
-                TpmRetCmd | TpmNonotify,
+                TpmRetCmd,
                 point.X,
                 point.Y,
-                0,
                 _windowHandle,
                 nint.Zero);
             PostMessage(_windowHandle, 0x0000, nint.Zero, nint.Zero);
@@ -238,7 +239,7 @@ public sealed class TrayIconService : IDisposable
     private static extern bool AppendMenu(nint menu, uint flags, nuint id, string newItem);
 
     [DllImport("user32.dll")]
-    private static extern int TrackPopupMenu(nint menu, uint flags, int x, int y, int reserved, nint owner, nint rect);
+    private static extern int TrackPopupMenuEx(nint menu, uint flags, int x, int y, nint owner, nint parameters);
 
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]

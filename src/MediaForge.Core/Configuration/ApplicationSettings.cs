@@ -8,7 +8,9 @@ public sealed record ApplicationSettings(
     string? DefaultOutputDirectory,
     OutputConflictPolicy OutputConflictPolicy,
     int MaxConcurrentJobs,
-    FolderImportSettings LastFolderImport)
+    FolderImportSettings LastFolderImport,
+    int WindowWidth = 800,
+    int WindowHeight = 600)
 {
     public const int CurrentSchemaVersion = 1;
 
@@ -20,5 +22,7 @@ public sealed record ApplicationSettings(
         DefaultOutputDirectory: null,
         OutputConflictPolicy: OutputConflictPolicy.AutoRename,
         MaxConcurrentJobs: 1,
-        LastFolderImport: FolderImportSettings.CreateDefault());
+        LastFolderImport: FolderImportSettings.CreateDefault(),
+        WindowWidth: 1200,
+        WindowHeight: 800);
 }
