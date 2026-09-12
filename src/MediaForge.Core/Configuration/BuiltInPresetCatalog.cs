@@ -22,8 +22,10 @@ public static class BuiltInPresetCatalog
             "高质量归档",
             new ConversionParameterSnapshot("mkv", new Dictionary<string, string>
             {
-                ["videoEncoder"] = "ffv1",
-                ["audioEncoder"] = "flac"
+                ["videoEncoder"] = "libx265",
+                ["audioEncoder"] = "flac",
+                ["qualityMode"] = "crf",
+                ["crf"] = "18"
             })),
         new PresetDocument(
             PresetDocument.CurrentSchemaVersion,
@@ -36,4 +38,6 @@ public static class BuiltInPresetCatalog
                 ["audioBitrateKbps"] = "192"
             }))
     ];
+
+    public static PresetDocument? Find(Guid id) => All.FirstOrDefault(preset => preset.Id == id);
 }

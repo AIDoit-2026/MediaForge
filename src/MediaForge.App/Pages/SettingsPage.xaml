@@ -32,14 +32,22 @@
                 </Grid.RowDefinitions>
 
                 <TextBlock x:Name="LanguageLabel" Grid.Row="0" VerticalAlignment="Center" />
-                <ComboBox x:Name="LanguageComboBox" Grid.Row="0" Grid.Column="1" SelectedIndex="0">
+                <ComboBox
+                    x:Name="LanguageComboBox"
+                    Grid.Row="0" Grid.Column="1"
+                    SelectedIndex="0"
+                    SelectionChanged="OnSettingChanged">
                     <ComboBoxItem x:Name="SystemLanguageOption" />
                     <ComboBoxItem x:Name="ChineseLanguageOption" />
                     <ComboBoxItem x:Name="EnglishLanguageOption" />
                 </ComboBox>
 
                 <TextBlock x:Name="ThemeLabel" Grid.Row="1" VerticalAlignment="Center" />
-                <ComboBox x:Name="ThemeComboBox" Grid.Row="1" Grid.Column="1" SelectedIndex="0">
+                <ComboBox
+                    x:Name="ThemeComboBox"
+                    Grid.Row="1" Grid.Column="1"
+                    SelectedIndex="0"
+                    SelectionChanged="OnSettingChanged">
                     <ComboBoxItem x:Name="SystemThemeOption" />
                     <ComboBoxItem x:Name="LightThemeOption" />
                     <ComboBoxItem x:Name="DarkThemeOption" />
@@ -53,7 +61,8 @@
                     </Grid.ColumnDefinitions>
                     <TextBox
                         x:Name="FfmpegDirectoryTextBox"
-                        Grid.Column="0" />
+                        Grid.Column="0"
+                        LostFocus="OnSettingChanged" />
                     <Button
                         x:Name="FfmpegDirectoryBrowseButton"
                         Grid.Column="1"
@@ -69,7 +78,8 @@
                     </Grid.ColumnDefinitions>
                     <TextBox
                         x:Name="DefaultOutputDirectoryTextBox"
-                        Grid.Column="0" />
+                        Grid.Column="0"
+                        LostFocus="OnSettingChanged" />
                     <Button
                         x:Name="DefaultOutputDirectoryBrowseButton"
                         Grid.Column="1"
@@ -78,7 +88,11 @@
                 </Grid>
 
                 <TextBlock x:Name="ConflictPolicyLabel" Grid.Row="4" VerticalAlignment="Center" />
-                <ComboBox x:Name="ConflictPolicyComboBox" Grid.Row="4" Grid.Column="1" SelectedIndex="2">
+                <ComboBox
+                    x:Name="ConflictPolicyComboBox"
+                    Grid.Row="4" Grid.Column="1"
+                    SelectedIndex="2"
+                    SelectionChanged="OnSettingChanged">
                     <ComboBoxItem x:Name="SkipConflictOption" />
                     <ComboBoxItem x:Name="OverwriteConflictOption" />
                     <ComboBoxItem x:Name="RenameConflictOption" />
@@ -93,14 +107,18 @@
                     Minimum="1"
                     SmallChange="1"
                     SpinButtonPlacementMode="Inline"
+                    ValueChanged="OnNumberSettingChanged"
                     Value="1" />
             </Grid>
 
-            <Button
-                x:Name="SaveButton"
-                HorizontalAlignment="Left"
-                Click="OnSaveClick"
-                 />
+            <TeachingTip
+                x:Name="AutoSaveTip"
+                IsLightDismissEnabled="True"
+                PreferredPlacement="Top">
+                <TeachingTip.Content>
+                    <TextBlock x:Name="AutoSaveTipTextBlock" />
+                </TeachingTip.Content>
+            </TeachingTip>
         </StackPanel>
     </ScrollViewer>
 </Page>

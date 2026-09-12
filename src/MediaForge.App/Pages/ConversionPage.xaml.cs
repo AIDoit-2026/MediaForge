@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using MediaForge.Core.Configuration;
 using MediaForge.Core.Ffmpeg;
 using MediaForge.Core.Importing;
 using MediaForge.Infrastructure.Ffmpeg;
@@ -14,6 +15,7 @@ namespace MediaForge.App.Pages;
 public sealed partial class ConversionPage : Page
 {
     private readonly ObservableCollection<ImportedMediaRow> _media = [];
+    private bool _presetLoaded;
 
     public ConversionPage()
     {
@@ -26,6 +28,7 @@ public sealed partial class ConversionPage : Page
         }
         App.Services.ConversionQueueRuntime.Queue.Changed += OnQueueChanged;
         App.Services.ConversionQueueRuntime.ProgressChanged += OnProgressChanged;
+        Loaded += OnLoaded;
         Unloaded += OnUnloaded;
     }
 
@@ -43,6 +46,7 @@ public sealed partial class ConversionPage : Page
         ExitButton.SetValue(Microsoft.UI.Xaml.Automation.AutomationProperties.NameProperty, ExitButton.Label);
         EmptyTitleTextBlock.Text = strings.GetString("Conversion.EmptyTitle");
         EmptyDescriptionTextBlock.Text = strings.GetString("Conversion.EmptyDescription");
+        PresetLabel.Text = strings.GetString("Conversion.PresetLabel");
     }
 
     private async void OnAddFilesClick(object sender, RoutedEventArgs args)
@@ -52,6 +56,43 @@ public sealed partial class ConversionPage : Page
         WinRT.Interop.InitializeWithWindow.Initialize(picker, App.WindowHandle);
         var files = await picker.PickMultipleFilesAsync();
         await ProbeFilesAsync(files);
+    }
+
+    private async void OnLoaded(object sender, RoutedEventArgs args)
+    {
+        Loaded -= OnLoaded;
+        await LoadPresetsAsync();
+    }
+
+    private async Task LoadPresetsAsync()
+    {
+        var runtime = App.Services.ConversionQueueRuntime;
+        var items = new List<PresetComboBoxItem>
+        {
+            new(null, App.Services.Localization.GetString("Conversion.PresetDefault"))
+        };
+        items.AddRange(BuiltInPresetCatalog.All.Select(preset => new PresetComboBoxItem(preset, PresetDisplay(preset))));
+        PresetComboBox.ItemsSource = items;
+        _presetLoaded = true;
+        var selectedId = runtime.SelectedPreset?.Id;
+        var selectedIndex = selectedId is { } id
+            ? items.FindIndex(item => item.Preset?.Id == id)
+            : 0;
+        PresetComboBox.SelectedIndex = selectedIndex >= 0 ? selectedIndex : 0;
+        if (PresetComboBox.SelectedItem is not PresetComboBoxItem { Preset: not null })
+        {
+            runtime.SetSelectedPreset(null);
+        }
+    }
+
+    private static string PresetDisplay(PresetDocument preset) =>
+        $"{preset.Name} ({preset.Parameters.OutputContainer.ToUpperInvariant()})";
+
+    private void OnPresetSelectionChanged(object sender, SelectionChangedEventArgs args)
+    {
+        if (!_presetLoaded) return;
+        var selected = PresetComboBox.SelectedItem as PresetComboBoxItem;
+        App.Services.ConversionQueueRuntime.SetSelectedPreset(selected?.Preset);
     }
 
     private async void OnStartClick(object sender, RoutedEventArgs args)
@@ -67,13 +108,8 @@ public sealed partial class ConversionPage : Page
             }
 
             var capabilities = await App.Services.FfmpegCapabilityService.GetAsync(resolution.Toolset!, forceRefresh: false);
+            var requirements = PresetFeatureRequirements(App.Services.ConversionQueueRuntime.CreateJobParameters());
             var guard = new FfmpegFeatureGuard();
-            var requirements = new[]
-            {
-                new FfmpegFeatureRequirement("MP4 output", FfmpegFeatureKind.Muxer, "mp4"),
-                new FfmpegFeatureRequirement("H.264 video encoding", FfmpegFeatureKind.Encoder, "libx264"),
-                new FfmpegFeatureRequirement("AAC audio encoding", FfmpegFeatureKind.Encoder, "aac")
-            };
             var unsupported = requirements
                 .Select(requirement => guard.Check(capabilities, requirement))
                 .FirstOrDefault(result => !result.IsSupported);
@@ -115,6 +151,27 @@ public sealed partial class ConversionPage : Page
         {
             ShowStatus(error.Message, InfoBarSeverity.Error);
         }
+    }
+
+    private static IReadOnlyList<FfmpegFeatureRequirement> PresetFeatureRequirements(ConversionParameterSnapshot parameters)
+    {
+        var requirements = new List<FfmpegFeatureRequirement>
+        {
+            new($"Output container {parameters.OutputContainer}", FfmpegFeatureKind.Muxer, parameters.OutputContainer)
+        };
+        var values = parameters.Values;
+        if (!values.TryGetValue("videoMode", out var videoMode) || videoMode != "none")
+        {
+            if (values.TryGetValue("videoEncoder", out var videoEncoder))
+            {
+                requirements.Add(new FfmpegFeatureRequirement($"Video encoder {videoEncoder}", FfmpegFeatureKind.Encoder, videoEncoder));
+            }
+        }
+        if (values.TryGetValue("audioEncoder", out var audioEncoder))
+        {
+            requirements.Add(new FfmpegFeatureRequirement($"Audio encoder {audioEncoder}", FfmpegFeatureKind.Encoder, audioEncoder));
+        }
+        return requirements;
     }
 
     private void OnClearClick(object sender, RoutedEventArgs args)
@@ -205,9 +262,7 @@ public sealed partial class ConversionPage : Page
         App.Services.ConversionQueueRuntime.Queue.Changed -= OnQueueChanged;
         App.Services.ConversionQueueRuntime.ProgressChanged -= OnProgressChanged;
         Unloaded -= OnUnloaded;
-    }
-
-    private async void OnAddFolderClick(object sender, RoutedEventArgs args)
+    }    private async void OnAddFolderClick(object sender, RoutedEventArgs args)
     {
         var settings = (await App.Services.SettingsStore.LoadAsync()).Settings;
         var dialog = new FolderImportDialog(settings.LastFolderImport) { XamlRoot = XamlRoot };
@@ -327,4 +382,9 @@ public sealed record ImportedMediaRow(
         var resolution = video?.Width is not null && video.Height is not null ? $"{video.Width}×{video.Height}" : null;
         return string.Join(" · ", new[] { duration, resolution, video?.Codec, video?.FrameRate, audio?.Codec, media.BitRate is null ? null : $"{media.BitRate / 1000} kb/s" }.Where(value => !string.IsNullOrWhiteSpace(value)));
     }
+}
+
+public sealed record PresetComboBoxItem(PresetDocument? Preset, string DisplayName)
+{
+    public override string ToString() => DisplayName;
 }

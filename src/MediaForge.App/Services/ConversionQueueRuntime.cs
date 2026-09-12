@@ -47,6 +47,20 @@ public sealed class ConversionQueueRuntime : IDisposable
 
     public ConversionQueueSnapshot Snapshot => Queue.GetSnapshot();
 
+    public PresetDocument? SelectedPreset { get; private set; }
+
+    public void SetSelectedPreset(PresetDocument? preset)
+    {
+        SelectedPreset = preset;
+    }
+
+    public ConversionParameterSnapshot CreateJobParameters() =>
+        SelectedPreset?.Parameters ?? new ConversionParameterSnapshot("mp4", new Dictionary<string, string>
+        {
+            ["videoEncoder"] = "libx264",
+            ["audioEncoder"] = "aac"
+        });
+
     public async Task RestoreAsync(CancellationToken cancellationToken = default)
     {
         Queue.Restore(await _queueStore.LoadAsync(cancellationToken));
@@ -60,14 +74,12 @@ public sealed class ConversionQueueRuntime : IDisposable
         var added = new List<ConversionJobSnapshot>();
         foreach (var source in sources)
         {
-            var outputPath = CreateDefaultOutputPath(source.Path, settings.DefaultOutputDirectory);
+            var outputPath = CreateDefaultOutputPath(
+                source.Path,
+                settings.DefaultOutputDirectory,
+                CreateJobParameters().OutputContainer);
             Directory.CreateDirectory(Path.GetDirectoryName(outputPath)!);
-            var parameters = new ConversionParameterSnapshot("mp4", new Dictionary<string, string>
-            {
-                ["videoEncoder"] = "libx264",
-                ["audioEncoder"] = "aac"
-            });
-            var job = Queue.Add(source.Path, outputPath, parameters);
+            var job = Queue.Add(source.Path, outputPath, CreateJobParameters());
             Queue.Queue(job.Id);
             added.Add(job);
         }
@@ -97,7 +109,7 @@ public sealed class ConversionQueueRuntime : IDisposable
         var toolset = _toolResolver.Resolve(settings.FfmpegDirectory).Toolset
             ?? throw new InvalidOperationException("FFmpeg and FFprobe are unavailable.");
         var source = await new FfprobeMediaProbeService(toolset, _processRunner).ProbeAsync(job.InputPath, cancellationToken);
-        var profile = ConversionProfile.CreateDefault();
+        var profile = ConversionProfileFactory.Create(job.Parameters);
         var capabilities = await _capabilityService.GetAsync(toolset, forceRefresh: false, cancellationToken);
         var validation = new ConversionValidator().Validate(source, profile, capabilities);
         if (!validation.IsValid)
@@ -146,7 +158,7 @@ public sealed class ConversionQueueRuntime : IDisposable
             jobId, percentage, update.OutputTime, update.Speed, now - startedAt, remaining, now)));
     }
 
-    private static string CreateDefaultOutputPath(string sourcePath, string? outputDirectory)
+    private static string CreateDefaultOutputPath(string sourcePath, string? outputDirectory, string container)
     {
         var directory = string.IsNullOrWhiteSpace(outputDirectory)
             ? Path.GetDirectoryName(sourcePath)
@@ -155,7 +167,7 @@ public sealed class ConversionQueueRuntime : IDisposable
         {
             throw new InvalidOperationException("The input path has no output directory.");
         }
-        return Path.Combine(directory, $"{Path.GetFileNameWithoutExtension(sourcePath)}.converted.mp4");
+        return Path.Combine(directory, $"{Path.GetFileNameWithoutExtension(sourcePath)}.converted.{container}");
     }
 
     public void Dispose()

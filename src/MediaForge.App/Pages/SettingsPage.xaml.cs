@@ -7,13 +7,26 @@ namespace MediaForge.App.Pages;
 
 public sealed partial class SettingsPage : Page
 {
+    private const int SaveDebounceMilliseconds = 400;
+
     private ApplicationSettings _settings = ApplicationSettings.CreateDefault();
+    private bool _loaded;
+    private bool _saving;
+    private bool _dirty;
+    private readonly DispatcherTimer _saveTimer;
 
     public SettingsPage()
     {
         InitializeComponent();
         ApplyStrings();
+        _saveTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(SaveDebounceMilliseconds) };
+        _saveTimer.Tick += async (_, _) =>
+        {
+            _saveTimer.Stop();
+            await SaveIfChangedAsync();
+        };
         Loaded += OnLoaded;
+        Unloaded += OnUnloaded;
     }
 
     private void ApplyStrings()
@@ -42,7 +55,6 @@ public sealed partial class SettingsPage : Page
         OverwriteConflictOption.Content = strings.GetString("OverwriteConflictOption.Content");
         RenameConflictOption.Content = strings.GetString("RenameConflictOption.Content");
         MaxConcurrencyLabel.Text = strings.GetString("MaxConcurrencyLabel.Text");
-        SaveButton.Content = strings.GetString("SaveButton.Content");
     }
 
     private async void OnLoaded(object sender, RoutedEventArgs args)
@@ -51,12 +63,26 @@ public sealed partial class SettingsPage : Page
         var loaded = await App.Services.SettingsStore.LoadAsync();
         _settings = loaded.Settings;
 
+        LanguageComboBox.SelectionChanged -= OnSettingChanged;
+        ThemeComboBox.SelectionChanged -= OnSettingChanged;
+        ConflictPolicyComboBox.SelectionChanged -= OnSettingChanged;
+        MaxConcurrencyNumberBox.ValueChanged -= OnNumberSettingChanged;
+        FfmpegDirectoryTextBox.LostFocus -= OnSettingChanged;
+        DefaultOutputDirectoryTextBox.LostFocus -= OnSettingChanged;
+
         LanguageComboBox.SelectedIndex = (int)_settings.Language;
         ThemeComboBox.SelectedIndex = (int)_settings.Theme;
         FfmpegDirectoryTextBox.Text = _settings.FfmpegDirectory ?? string.Empty;
         DefaultOutputDirectoryTextBox.Text = _settings.DefaultOutputDirectory ?? string.Empty;
         ConflictPolicyComboBox.SelectedIndex = (int)_settings.OutputConflictPolicy;
         MaxConcurrencyNumberBox.Value = _settings.MaxConcurrentJobs;
+
+        LanguageComboBox.SelectionChanged += OnSettingChanged;
+        ThemeComboBox.SelectionChanged += OnSettingChanged;
+        ConflictPolicyComboBox.SelectionChanged += OnSettingChanged;
+        MaxConcurrencyNumberBox.ValueChanged += OnNumberSettingChanged;
+        FfmpegDirectoryTextBox.LostFocus += OnSettingChanged;
+        DefaultOutputDirectoryTextBox.LostFocus += OnSettingChanged;
 
         if (loaded.RecoveredFromCorruption)
         {
@@ -65,34 +91,107 @@ public sealed partial class SettingsPage : Page
 
         if (!App.Services.ApplicationPaths.CanPersist)
         {
-            SaveButton.IsEnabled = false;
             ShowStatus(Strings("Settings.CannotPersist"), InfoBarSeverity.Warning);
+        }
+
+        _loaded = true;
+    }
+
+    private void OnUnloaded(object sender, RoutedEventArgs args)
+    {
+        _saveTimer.Stop();
+        if (_dirty)
+        {
+            _ = PersistAsync();
         }
     }
 
-    private async void OnSaveClick(object sender, RoutedEventArgs args)
+    private void OnSettingChanged(object sender, RoutedEventArgs args)
     {
-        if (MaxConcurrencyNumberBox.Value is < 1 or > 4)
+        if (!_loaded) return;
+        _dirty = true;
+        _saveTimer.Stop();
+        _saveTimer.Start();
+    }
+
+    private void OnNumberSettingChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
+    {
+        if (!_loaded) return;
+        _dirty = true;
+        _saveTimer.Stop();
+        _saveTimer.Start();
+    }
+
+    private async Task SaveIfChangedAsync()
+    {
+        if (!_loaded) return;
+        var concurrency = (int)Math.Round(MaxConcurrencyNumberBox.Value);
+        if (concurrency is < 1 or > 4)
         {
             ShowStatus(Strings("Settings.InvalidConcurrency"), InfoBarSeverity.Error);
             return;
         }
 
-        _settings = _settings with
+        var updated = _settings with
         {
             Language = (ApplicationLanguage)LanguageComboBox.SelectedIndex,
             Theme = (MediaForge.Core.Configuration.ApplicationTheme)ThemeComboBox.SelectedIndex,
             FfmpegDirectory = EmptyToNull(FfmpegDirectoryTextBox.Text),
             DefaultOutputDirectory = EmptyToNull(DefaultOutputDirectoryTextBox.Text),
             OutputConflictPolicy = (OutputConflictPolicy)ConflictPolicyComboBox.SelectedIndex,
-            MaxConcurrentJobs = (int)MaxConcurrencyNumberBox.Value
+            MaxConcurrentJobs = concurrency
         };
+        if (updated == _settings) return;
 
-        await App.Services.SettingsStore.SaveAsync(_settings);
-        App.Services.Localization.Apply(_settings.Language);
-        App.Services.Theme.Apply(_settings.Theme, App.Window.Content as FrameworkElement);
-        ShowStatus(Strings("Settings.Saved"), InfoBarSeverity.Success);
-        (App.Window as MainWindow)?.RefreshShell();
+        await PersistAsync(updated);
+    }
+
+    private async Task PersistAsync(ApplicationSettings? updated = null)
+    {
+        if (_saving) { _dirty = true; return; }
+        _saving = true;
+        try
+        {
+            var settings = updated ?? CollectSettings();
+            if (settings is null) return;
+
+            await App.Services.SettingsStore.SaveAsync(settings);
+            _settings = settings;
+            _dirty = false;
+            if (!App.Services.ApplicationPaths.CanPersist) return;
+
+            var languageChanged = App.Services.Localization.Language != settings.Language;
+            App.Services.Localization.Apply(settings.Language);
+            App.Services.Theme.Apply(settings.Theme, App.Window.Content as FrameworkElement);
+            ShowFloatingTip(Strings("Settings.AutoSaved"));
+            if (languageChanged)
+            {
+                (App.Window as MainWindow)?.RefreshShell();
+            }
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+
+    private ApplicationSettings? CollectSettings()
+    {
+        var concurrency = (int)Math.Round(MaxConcurrencyNumberBox.Value);
+        if (concurrency is < 1 or > 4)
+        {
+            ShowStatus(Strings("Settings.InvalidConcurrency"), InfoBarSeverity.Error);
+            return null;
+        }
+        return _settings with
+        {
+            Language = (ApplicationLanguage)LanguageComboBox.SelectedIndex,
+            Theme = (MediaForge.Core.Configuration.ApplicationTheme)ThemeComboBox.SelectedIndex,
+            FfmpegDirectory = EmptyToNull(FfmpegDirectoryTextBox.Text),
+            DefaultOutputDirectory = EmptyToNull(DefaultOutputDirectoryTextBox.Text),
+            OutputConflictPolicy = (OutputConflictPolicy)ConflictPolicyComboBox.SelectedIndex,
+            MaxConcurrentJobs = concurrency
+        };
     }
 
     private async void OnFfmpegDirectoryBrowseClick(object sender, RoutedEventArgs args) =>
@@ -101,7 +200,7 @@ public sealed partial class SettingsPage : Page
     private async void OnDefaultOutputDirectoryBrowseClick(object sender, RoutedEventArgs args) =>
         await PickDirectoryAsync(DefaultOutputDirectoryTextBox);
 
-    private static async Task PickDirectoryAsync(TextBox target)
+    private async Task PickDirectoryAsync(TextBox target)
     {
         var picker = new FolderPicker();
         WinRT.Interop.InitializeWithWindow.Initialize(picker, App.WindowHandle);
@@ -109,7 +208,14 @@ public sealed partial class SettingsPage : Page
         if (folder is not null)
         {
             target.Text = folder.Path;
+            await SaveIfChangedAsync();
         }
+    }
+
+    private void ShowFloatingTip(string message)
+    {
+        AutoSaveTipTextBlock.Text = message;
+        AutoSaveTip.IsOpen = true;
     }
 
     private void ShowStatus(string message, InfoBarSeverity severity)
