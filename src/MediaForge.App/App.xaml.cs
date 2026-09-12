@@ -62,6 +62,7 @@ public partial class App : Application
         try
         {
             await Services.ConversionQueueRuntime.StopAndPersistAsync();
+            await Services.TemporaryOutputRecoveryService.RecoverAsync();
             Services.Logger.Log(new ApplicationLogEntry(
                 DateTimeOffset.UtcNow,
                 ApplicationLogLevel.Information,
