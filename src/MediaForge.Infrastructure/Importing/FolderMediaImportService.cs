@@ -35,7 +35,8 @@ public sealed class FolderMediaImportService : IMediaImportService
             {
                 return new MediaImportItem(path, await _mediaProbeService.ProbeAsync(path, cancellationToken), null);
             }
-            catch (Exception error) when (error is IOException or UnauthorizedAccessException or InvalidOperationException)
+            catch (OperationCanceledException) { throw; }
+            catch (Exception error)
             {
                 return new MediaImportItem(path, null, error.Message);
             }

@@ -75,9 +75,10 @@ public sealed partial class PresetsPage : Page
         var editor = new TextBox
         {
             Text = JsonSerializer.Serialize(preset, JsonOptions), AcceptsReturn = true, TextWrapping = TextWrapping.NoWrap,
-            FontFamily = new Microsoft.UI.Xaml.Media.FontFamily("Consolas"), MinWidth = 620, MinHeight = 360,
-            VerticalScrollBarVisibility = ScrollBarVisibility.Auto, HorizontalScrollBarVisibility = ScrollBarVisibility.Auto
+            FontFamily = new Microsoft.UI.Xaml.Media.FontFamily("Consolas"), MinWidth = 620, MinHeight = 360
         };
+        editor.SetValue(ScrollViewer.VerticalScrollBarVisibilityProperty, ScrollBarVisibility.Auto);
+        editor.SetValue(ScrollViewer.HorizontalScrollBarVisibilityProperty, ScrollBarVisibility.Auto);
         var dialog = new ContentDialog
         {
             Title = App.Services.Localization.GetString("Presets.EditTitle"), Content = editor,

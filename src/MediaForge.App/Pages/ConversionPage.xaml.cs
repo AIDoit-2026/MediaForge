@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Text.Json;
 using MediaForge.Core.Configuration;
 using MediaForge.Core.Ffmpeg;
 using MediaForge.Core.Importing;
@@ -148,7 +149,8 @@ public sealed partial class ConversionPage : Page
             await App.Services.ConversionQueueRuntime.StartAsync();
             ShowStatus(string.Format(App.Services.Localization.GetString("Conversion.QueuedCount"), jobs.Count), InfoBarSeverity.Success);
         }
-        catch (Exception error) when (error is IOException or UnauthorizedAccessException or InvalidOperationException)
+        catch (OperationCanceledException) { throw; }
+        catch (Exception error)
         {
             ShowStatus(error.Message, InfoBarSeverity.Error);
         }
@@ -293,9 +295,11 @@ public sealed partial class ConversionPage : Page
 
             await App.Services.SettingsStore.SaveAsync(settings with { LastFolderImport = import });
         }
-        catch (Exception error) when (error is IOException or UnauthorizedAccessException or InvalidOperationException or ArgumentException)
+        catch (OperationCanceledException) { throw; }
+        catch (Exception error)
         {
             AddError(import.Directory!, error.Message);
+            ShowStatus(error.Message, InfoBarSeverity.Error);
         }
     }
 
@@ -319,6 +323,7 @@ public sealed partial class ConversionPage : Page
 
     private async Task ProbeFilesAsync(IEnumerable<StorageFile> files)
     {
+        var failed = 0;
         var settings = (await App.Services.SettingsStore.LoadAsync()).Settings;
         var resolution = App.Services.FfmpegToolResolver.Resolve(settings.FfmpegDirectory);
         if (!resolution.IsSuccess)
@@ -331,10 +336,23 @@ public sealed partial class ConversionPage : Page
         foreach (var file in files)
         {
             try { Add(file.Path, await probe.ProbeAsync(file.Path), null); }
-            catch (Exception error) when (error is IOException or UnauthorizedAccessException or InvalidOperationException)
-            { AddError(file.Path, error.Message); }
+            catch (OperationCanceledException) { throw; }
+            catch (Exception error)
+            {
+                failed++;
+                AddError(file.Path, FormatProbeError(error));
+            }
         }
+        if (failed > 0)
+            ShowStatus($"Could not read {failed} file(s). They remain in the list with the error details.", InfoBarSeverity.Warning);
     }
+
+    private static string FormatProbeError(Exception error) => error switch
+    {
+        JsonException => "FFprobe returned invalid JSON: " + error.Message,
+        InvalidOperationException or UnauthorizedAccessException or IOException => error.Message,
+        _ => "Unable to read media information: " + error.Message
+    };
 
     private void Add(string path, MediaForge.Core.Media.MediaSourceInfo? media, string? error)
     {
