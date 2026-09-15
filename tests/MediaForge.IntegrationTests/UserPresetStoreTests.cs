@@ -24,7 +24,9 @@ public sealed class UserPresetStoreTests : IDisposable
         Assert.NotEqual(first.Id, copy.Id);
         Assert.Equal([renamed.Id, copy.Id], loaded.Select(preset => preset.Id));
         Assert.Equal([renamed.Name, copy.Name], loaded.Select(preset => preset.Name));
-        Assert.Equal(2, Directory.GetFiles(Path.Combine(paths.ConfigDirectory, "presets"), "*.json").Length);
+        Assert.Equal(2, Directory.GetFiles(Path.Combine(paths.BaseDirectory, "Presents"), "*.json").Length);
+        Assert.Contains(Directory.GetFiles(Path.Combine(paths.BaseDirectory, "Presents")), path => Path.GetFileName(path).StartsWith("Archive-lossless-", StringComparison.Ordinal));
+        Assert.Contains(Directory.GetFiles(Path.Combine(paths.BaseDirectory, "Presents")), path => Path.GetFileName(path).StartsWith("Mobile-", StringComparison.Ordinal));
 
         await store.DeleteAsync(copy.Id);
 
@@ -39,7 +41,7 @@ public sealed class UserPresetStoreTests : IDisposable
         var paths = new Paths(_root, canPersist: true);
         var json = new AtomicJsonFileStore();
         var legacy = new PresetDocument(0, Guid.NewGuid(), "Legacy", ConversionParameterSnapshot.CreateDefault());
-        await json.WriteAsync(Path.Combine(paths.ConfigDirectory, "presets", $"{legacy.Id:N}.json"), legacy);
+        await json.WriteAsync(Path.Combine(paths.BaseDirectory, "Presents", $"{legacy.Id:N}.json"), legacy);
 
         var loaded = await new UserPresetStore(paths, json).LoadAsync();
 

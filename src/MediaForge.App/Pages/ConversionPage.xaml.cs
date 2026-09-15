@@ -67,11 +67,12 @@ public sealed partial class ConversionPage : Page
     private async Task LoadPresetsAsync()
     {
         var runtime = App.Services.ConversionQueueRuntime;
+        var presets = await App.Services.UserPresetStore.LoadAsync();
         var items = new List<PresetComboBoxItem>
         {
             new(null, App.Services.Localization.GetString("Conversion.PresetDefault"))
         };
-        items.AddRange(BuiltInPresetCatalog.All.Select(preset => new PresetComboBoxItem(preset, PresetDisplay(preset))));
+        items.AddRange(presets.Select(preset => new PresetComboBoxItem(preset, PresetDisplay(preset))));
         PresetComboBox.ItemsSource = items;
         _presetLoaded = true;
         var selectedId = runtime.SelectedPreset?.Id;

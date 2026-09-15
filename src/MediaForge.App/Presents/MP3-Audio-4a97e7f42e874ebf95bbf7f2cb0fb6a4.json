@@ -1,0 +1,6 @@
+{
+  "schemaVersion": 1,
+  "id": "4a97e7f4-2e87-4ebf-95bb-f7f2cb0fb6a4",
+  "name": "MP3 Audio",
+  "parameters": { "outputContainer": "mp3", "values": { "videoMode": "none", "audioEncoder": "libmp3lame", "audioBitrateKbps": "192" } }
+}

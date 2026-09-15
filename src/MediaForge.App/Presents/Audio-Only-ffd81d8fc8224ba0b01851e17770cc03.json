@@ -1,0 +1,6 @@
+{
+  "schemaVersion": 1,
+  "id": "ffd81d8f-c822-4ba0-b018-51e17770cc03",
+  "name": "Audio Only",
+  "parameters": { "outputContainer": "m4a", "values": { "videoMode": "none", "audioEncoder": "aac", "audioBitrateKbps": "192" } }
+}

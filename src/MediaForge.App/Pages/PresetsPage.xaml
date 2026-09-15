@@ -10,6 +10,10 @@
         <TextBlock
             x:Name="DescriptionTextBlock"
             Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+        <StackPanel Orientation="Horizontal" Spacing="8">
+            <Button x:Name="AddButton" Click="OnAddClick" />
+            <Button x:Name="ReloadButton" Click="OnReloadClick" />
+        </StackPanel>
         <TeachingTip
             x:Name="UsePresetConfirmationTeachingTip"
             IsLightDismissEnabled="True"
@@ -32,12 +36,11 @@
                                 Text="{x:Bind SelectedText}"
                                 Visibility="{x:Bind SelectedVisibility}" />
                         </StackPanel>
-                        <Button
-                            Grid.Column="1"
-                            VerticalAlignment="Center"
-                            Click="OnUsePresetClick"
-                            Content="{x:Bind UseButtonText}"
-                            DataContext="{x:Bind}" />
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" Margin="0,0,0,0">
+                            <Button Click="OnUsePresetClick" Content="{x:Bind UseButtonText}" DataContext="{x:Bind}" />
+                            <Button Click="OnEditPresetClick" Content="{x:Bind EditButtonText}" DataContext="{x:Bind}" />
+                            <Button Click="OnDeletePresetClick" Content="{x:Bind DeleteButtonText}" DataContext="{x:Bind}" />
+                        </StackPanel>
                     </Grid>
                 </DataTemplate>
             </ListView.ItemTemplate>

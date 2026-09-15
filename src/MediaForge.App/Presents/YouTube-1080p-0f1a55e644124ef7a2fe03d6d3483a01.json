@@ -1,0 +1,6 @@
+{
+  "schemaVersion": 1,
+  "id": "0f1a55e6-4412-4ef7-a2fe-03d6d3483a01",
+  "name": "YouTube 1080p",
+  "parameters": { "outputContainer": "mp4", "values": { "videoEncoder": "libx264", "audioEncoder": "aac", "resolution": "1920x1080", "qualityMode": "crf", "crf": "23" } }
+}

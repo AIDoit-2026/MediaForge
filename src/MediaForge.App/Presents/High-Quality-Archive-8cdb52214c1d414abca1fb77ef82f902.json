@@ -1,0 +1,6 @@
+{
+  "schemaVersion": 1,
+  "id": "8cdb5221-4c1d-414a-bca1-fb77ef82f902",
+  "name": "High Quality Archive",
+  "parameters": { "outputContainer": "mkv", "values": { "videoEncoder": "libx265", "audioEncoder": "flac", "qualityMode": "crf", "crf": "18" } }
+}

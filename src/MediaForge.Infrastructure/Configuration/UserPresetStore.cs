@@ -6,8 +6,7 @@ public sealed class UserPresetStore(IApplicationPaths paths, AtomicJsonFileStore
 {
     public async Task<IReadOnlyList<PresetDocument>> LoadAsync(CancellationToken cancellationToken = default)
     {
-        if (!paths.CanPersist) return [];
-        var directory = Path.Combine(paths.ConfigDirectory, "presets");
+        var directory = Path.Combine(paths.BaseDirectory, "Presents");
         if (!Directory.Exists(directory)) return [];
         var presets = new List<PresetDocument>();
         foreach (var file in Directory.EnumerateFiles(directory, "*.json"))
@@ -24,7 +23,7 @@ public sealed class UserPresetStore(IApplicationPaths paths, AtomicJsonFileStore
         return new PresetDocument(PresetDocument.CurrentSchemaVersion, Guid.NewGuid(), NormalizeName(name), parameters);
     }
 
-    public Task SaveAsync(PresetDocument preset, CancellationToken cancellationToken = default)
+    public async Task SaveAsync(PresetDocument preset, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(preset);
         if (preset.Id == Guid.Empty)
@@ -33,9 +32,19 @@ public sealed class UserPresetStore(IApplicationPaths paths, AtomicJsonFileStore
         }
 
         var currentPreset = PresetDocumentMigration.MigrateToCurrent(preset) with { Name = NormalizeName(preset.Name) };
-        return paths.CanPersist
-            ? store.WriteAsync(Path.Combine(paths.ConfigDirectory, "presets", $"{currentPreset.Id:N}.json"), currentPreset, cancellationToken)
-            : Task.CompletedTask;
+        if (!paths.CanPersist) return;
+
+        var directory = Path.Combine(paths.BaseDirectory, "Presents");
+        Directory.CreateDirectory(directory);
+        var targetPath = Path.Combine(directory, $"{FileNameFor(currentPreset)}.json");
+        await store.WriteAsync(targetPath, currentPreset, cancellationToken);
+        foreach (var path in Directory.EnumerateFiles(directory, "*.json"))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (string.Equals(path, targetPath, StringComparison.OrdinalIgnoreCase)) continue;
+            var result = await store.ReadAsync<PresetDocument?>(path, () => null, cancellationToken);
+            if (result.Value?.Id == currentPreset.Id) File.Delete(path);
+        }
     }
 
     public async Task<PresetDocument> SaveAsAsync(PresetDocument source, string name, CancellationToken cancellationToken = default)
@@ -54,7 +63,7 @@ public sealed class UserPresetStore(IApplicationPaths paths, AtomicJsonFileStore
         return renamed;
     }
 
-    public Task DeleteAsync(Guid presetId, CancellationToken cancellationToken = default)
+    public async Task DeleteAsync(Guid presetId, CancellationToken cancellationToken = default)
     {
         if (presetId == Guid.Empty)
         {
@@ -62,14 +71,39 @@ public sealed class UserPresetStore(IApplicationPaths paths, AtomicJsonFileStore
         }
 
         cancellationToken.ThrowIfCancellationRequested();
-        var path = Path.Combine(paths.ConfigDirectory, "presets", $"{presetId:N}.json");
-        if (paths.CanPersist && File.Exists(path)) File.Delete(path);
-        return Task.CompletedTask;
+        if (!paths.CanPersist) return;
+        var directory = Path.Combine(paths.BaseDirectory, "Presents");
+        if (!Directory.Exists(directory)) return;
+        foreach (var path in Directory.EnumerateFiles(directory, "*.json"))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var result = await store.ReadAsync<PresetDocument?>(path, () => null, cancellationToken);
+            if (result.Value?.Id == presetId)
+            {
+                File.Delete(path);
+            }
+        }
     }
 
     private static string NormalizeName(string name)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
         return name.Trim();
+    }
+
+    private static string FileNameFor(PresetDocument preset)
+    {
+        var invalid = Path.GetInvalidFileNameChars();
+        var builder = new System.Text.StringBuilder(preset.Name.Length);
+        foreach (var character in preset.Name.Trim())
+        {
+            if (invalid.Contains(character) || char.IsControl(character) || char.IsWhiteSpace(character)) builder.Append('-');
+            else builder.Append(character);
+        }
+
+        var slug = builder.ToString().Trim('.', ' ', '-');
+        if (slug.Length == 0) slug = "preset";
+        if (slug.Length > 80) slug = slug[..80].TrimEnd('-', '.');
+        return $"{slug}-{preset.Id:N}";
     }
 }
