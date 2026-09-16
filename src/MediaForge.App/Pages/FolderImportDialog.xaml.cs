@@ -2,6 +2,7 @@ using MediaForge.Core.Configuration;
 using MediaForge.Core.Importing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Windows.Storage.Pickers;
 
 namespace MediaForge.App.Pages;
 
@@ -28,6 +29,7 @@ public sealed partial class FolderImportDialog : ContentDialog
         CloseButtonText = strings.GetString("FolderImport.Cancel");
         DirectoryTextBox.Header = strings.GetString("FolderImport.Folder");
         DirectoryTextBox.PlaceholderText = strings.GetString("FolderImport.FolderPlaceholder");
+        BrowseDirectoryButton.SetValue(Microsoft.UI.Xaml.Automation.AutomationProperties.NameProperty, "Browse folder");
         RecursiveCheckBox.Content = strings.GetString("FolderImport.Recursive");
         FilterModeComboBox.Header = strings.GetString("FolderImport.Filter");
         AllFilesOption.Content = strings.GetString("FolderImport.AllFiles");
@@ -38,6 +40,15 @@ public sealed partial class FolderImportDialog : ContentDialog
     }
 
     private void OnFilterModeChanged(object sender, SelectionChangedEventArgs args) => UpdateExpressionState();
+
+    private async void OnBrowseDirectoryClick(object sender, RoutedEventArgs args)
+    {
+        var picker = new FolderPicker();
+        picker.FileTypeFilter.Add("*");
+        WinRT.Interop.InitializeWithWindow.Initialize(picker, App.WindowHandle);
+        var folder = await picker.PickSingleFolderAsync();
+        if (folder is not null) DirectoryTextBox.Text = folder.Path;
+    }
 
     private void UpdateExpressionState()
     {

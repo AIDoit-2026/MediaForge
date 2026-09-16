@@ -6,7 +6,8 @@ public sealed class AtomicJsonFileStore
 {
     private static readonly JsonSerializerOptions SerializerOptions = new()
     {
-        WriteIndented = true
+        WriteIndented = true,
+        PropertyNameCaseInsensitive = true
     };
 
     public async Task WriteAsync<T>(string path, T value, CancellationToken cancellationToken = default)

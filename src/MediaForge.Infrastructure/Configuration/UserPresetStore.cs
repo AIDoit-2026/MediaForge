@@ -4,6 +4,17 @@ namespace MediaForge.Infrastructure.Configuration;
 
 public sealed class UserPresetStore(IApplicationPaths paths, AtomicJsonFileStore store) : IUserPresetStore
 {
+    public async Task EnsureBuiltInPresetsAsync(CancellationToken cancellationToken = default)
+    {
+        if (!paths.CanPersist) return;
+        var existing = await LoadAsync(cancellationToken);
+        var ids = existing.Select(preset => preset.Id).ToHashSet();
+        foreach (var preset in BuiltInPresetCatalog.All.Where(preset => !ids.Contains(preset.Id)))
+        {
+            await SaveAsync(preset, cancellationToken);
+        }
+    }
+
     public async Task<IReadOnlyList<PresetDocument>> LoadAsync(CancellationToken cancellationToken = default)
     {
         var directory = Path.Combine(paths.BaseDirectory, "Presents");

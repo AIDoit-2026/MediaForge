@@ -126,6 +126,7 @@ public partial class App : Application
         try
         {
             Services = ApplicationServices.Create(AppContext.BaseDirectory);
+            await Services.UserPresetStore.EnsureBuiltInPresetsAsync();
             await Services.ConversionQueueRuntime.RestoreAsync();
             var mainWindow = new MainWindow();
             Window = mainWindow;
