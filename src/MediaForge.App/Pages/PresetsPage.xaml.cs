@@ -75,16 +75,25 @@ public sealed partial class PresetsPage : Page
         var name = new TextBox { Header = "Name", Text = preset.Name };
         var container = new TextBox { Header = "Output container", Text = preset.Parameters.OutputContainer };
         var fields = new Dictionary<string, TextBox>(StringComparer.OrdinalIgnoreCase);
-        foreach (var key in new[] { "videoMode", "videoEncoder", "audioEncoder", "resolution", "qualityMode", "crf", "audioBitrateKbps" })
+        var parameterKeys = new[] { "videoMode", "videoEncoder", "audioEncoder", "resolution", "qualityMode", "crf", "audioBitrateKbps" }
+            .Concat(preset.Parameters.Values.Keys)
+            .Distinct(StringComparer.OrdinalIgnoreCase);
+        foreach (var key in parameterKeys)
         {
             fields[key] = new TextBox { Header = key, Text = preset.Parameters.Values.TryGetValue(key, out var value) ? value : string.Empty };
         }
         var form = new StackPanel { Spacing = 8, Children = { name, container } };
         foreach (var field in fields.Values) form.Children.Add(field);
+        var formScroller = new ScrollViewer
+        {
+            Content = form,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled
+        };
         var editor = new TextBox
         {
             Text = JsonSerializer.Serialize(preset, JsonOptions), AcceptsReturn = true, TextWrapping = TextWrapping.NoWrap,
-            FontFamily = new Microsoft.UI.Xaml.Media.FontFamily("Consolas"), MinWidth = 620, MinHeight = 360,
+            FontFamily = new Microsoft.UI.Xaml.Media.FontFamily("Consolas"),
             Visibility = Visibility.Collapsed
         };
         editor.SetValue(ScrollViewer.VerticalScrollBarVisibilityProperty, ScrollBarVisibility.Auto);
@@ -93,11 +102,24 @@ public sealed partial class PresetsPage : Page
         modeButton.Click += (_, _) =>
         {
             var jsonMode = editor.Visibility == Visibility.Visible;
+            if (!jsonMode)
+            {
+                editor.Text = JsonSerializer.Serialize(CreatePresetFromFields(), JsonOptions);
+            }
+            else if (!TryApplyJsonToFields())
+            {
+                UsePresetConfirmationTeachingTip.Content = App.Services.Localization.GetString("Presets.InvalidJson");
+                UsePresetConfirmationTeachingTip.IsOpen = true;
+                return;
+            }
             editor.Visibility = jsonMode ? Visibility.Collapsed : Visibility.Visible;
-            form.Visibility = jsonMode ? Visibility.Visible : Visibility.Collapsed;
+            formScroller.Visibility = jsonMode ? Visibility.Visible : Visibility.Collapsed;
             modeButton.Content = jsonMode ? "Edit JSON" : "Edit fields";
         };
-        var content = new StackPanel { Spacing = 8, Children = { modeButton, form, editor } };
+        var editSurface = new Grid { Width = 680, Height = 420 };
+        editSurface.Children.Add(formScroller);
+        editSurface.Children.Add(editor);
+        var content = new StackPanel { Spacing = 8, Children = { modeButton, editSurface } };
         var dialog = new ContentDialog
         {
             Title = App.Services.Localization.GetString("Presets.EditTitle"), Content = content,
@@ -114,13 +136,7 @@ public sealed partial class PresetsPage : Page
             }
             else
             {
-                var values = fields.Where(pair => !string.IsNullOrWhiteSpace(pair.Value.Text))
-                    .ToDictionary(pair => pair.Key, pair => pair.Value.Text.Trim(), StringComparer.OrdinalIgnoreCase);
-                result = preset with
-                {
-                    Name = name.Text.Trim(),
-                    Parameters = new ConversionParameterSnapshot(container.Text.Trim(), values)
-                };
+                result = CreatePresetFromFields();
             }
             if (result is null || result.Id == Guid.Empty || string.IsNullOrWhiteSpace(result.Name)) throw new JsonException();
             return PresetDocumentMigration.MigrateToCurrent(result) with { Id = preset.Id };
@@ -130,6 +146,37 @@ public sealed partial class PresetsPage : Page
             UsePresetConfirmationTeachingTip.Content = App.Services.Localization.GetString("Presets.InvalidJson");
             UsePresetConfirmationTeachingTip.IsOpen = true;
             return null;
+        }
+
+        PresetDocument CreatePresetFromFields()
+        {
+            var values = fields.Where(pair => !string.IsNullOrWhiteSpace(pair.Value.Text))
+                .ToDictionary(pair => pair.Key, pair => pair.Value.Text.Trim(), StringComparer.OrdinalIgnoreCase);
+            return preset with
+            {
+                Name = name.Text.Trim(),
+                Parameters = new ConversionParameterSnapshot(container.Text.Trim(), values)
+            };
+        }
+
+        bool TryApplyJsonToFields()
+        {
+            try
+            {
+                var document = JsonSerializer.Deserialize<PresetDocument>(editor.Text, JsonOptions);
+                if (document is null || document.Parameters is null || string.IsNullOrWhiteSpace(document.Name)) return false;
+                name.Text = document.Name;
+                container.Text = document.Parameters.OutputContainer;
+                foreach (var pair in fields)
+                {
+                    pair.Value.Text = document.Parameters.Values.TryGetValue(pair.Key, out var value) ? value : string.Empty;
+                }
+                return true;
+            }
+            catch (Exception error) when (error is JsonException or NotSupportedException)
+            {
+                return false;
+            }
         }
     }
 
