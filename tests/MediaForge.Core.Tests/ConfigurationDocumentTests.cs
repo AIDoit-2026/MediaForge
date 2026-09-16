@@ -78,12 +78,12 @@ public sealed class ConfigurationDocumentTests
             },
             archive =>
             {
-                Assert.Equal("高质量归档", archive.Name);
+                Assert.Equal("High Quality Archive", archive.Name);
                 Assert.Equal("mkv", archive.Parameters.OutputContainer);
             },
             audioOnly =>
             {
-                Assert.Equal("仅音频", audioOnly.Name);
+                Assert.Equal("Audio Only", audioOnly.Name);
                 Assert.Equal("none", audioOnly.Parameters.Values["videoMode"]);
             },
             mp3 =>

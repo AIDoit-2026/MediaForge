@@ -19,7 +19,7 @@ public static class BuiltInPresetCatalog
         new PresetDocument(
             PresetDocument.CurrentSchemaVersion,
             Guid.Parse("8cdb5221-4c1d-414a-bca1-fb77ef82f902"),
-            "高质量归档",
+            "High Quality Archive",
             new ConversionParameterSnapshot("mkv", new Dictionary<string, string>
             {
                 ["videoEncoder"] = "libx265",
@@ -30,7 +30,7 @@ public static class BuiltInPresetCatalog
         new PresetDocument(
             PresetDocument.CurrentSchemaVersion,
             Guid.Parse("ffd81d8f-c822-4ba0-b018-51e17770cc03"),
-            "仅音频",
+            "Audio Only",
             new ConversionParameterSnapshot("m4a", new Dictionary<string, string>
             {
                 ["videoMode"] = "none",
