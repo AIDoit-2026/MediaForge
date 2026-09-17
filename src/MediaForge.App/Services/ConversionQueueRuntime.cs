@@ -77,7 +77,7 @@ public sealed class ConversionQueueRuntime : IDisposable
         {
             var outputPath = CreateDefaultOutputPath(
                 source.Path,
-                settings.DefaultOutputDirectory,
+                settings,
                 CreateJobParameters().OutputContainer);
             Directory.CreateDirectory(Path.GetDirectoryName(outputPath)!);
             var job = Queue.Add(source.Path, outputPath, CreateJobParameters());
@@ -172,14 +172,20 @@ public sealed class ConversionQueueRuntime : IDisposable
             jobId, percentage, update.OutputTime, update.Speed, now - startedAt, remaining, now)));
     }
 
-    private static string CreateDefaultOutputPath(string sourcePath, string? outputDirectory, string container)
+    private static string CreateDefaultOutputPath(string sourcePath, ApplicationSettings settings, string container)
     {
-        var directory = string.IsNullOrWhiteSpace(outputDirectory)
-            ? Path.GetDirectoryName(sourcePath)
-            : outputDirectory;
+        var sourceDirectory = Path.GetDirectoryName(sourcePath);
+        var directory = settings.OutputDirectoryMode switch
+        {
+            OutputDirectoryMode.SourceSiblingOutputDirectory when !string.IsNullOrWhiteSpace(sourceDirectory) =>
+                Path.Combine(sourceDirectory, "output"),
+            OutputDirectoryMode.SettingsDefaultDirectory => settings.DefaultOutputDirectory,
+            OutputDirectoryMode.MainPageDirectory => settings.MainPageOutputDirectory,
+            _ => null
+        };
         if (string.IsNullOrWhiteSpace(directory))
         {
-            throw new InvalidOperationException("The input path has no output directory.");
+            throw new InvalidOperationException("Choose an output directory for the selected output mode.");
         }
         return Path.Combine(directory, $"{Path.GetFileNameWithoutExtension(sourcePath)}.converted.{container}");
     }

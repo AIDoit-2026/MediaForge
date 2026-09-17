@@ -51,6 +51,31 @@
                 x:Name="PresetComboBox"
                 MinWidth="180"
                 SelectionChanged="OnPresetSelectionChanged" />
+            <TextBlock
+                x:Name="OutputDirectoryLabel"
+                Margin="12,0,0,0"
+                VerticalAlignment="Center"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            <ComboBox
+                x:Name="OutputDirectoryModeComboBox"
+                MinWidth="210"
+                SelectionChanged="OnOutputDirectoryModeChanged">
+                <ComboBoxItem x:Name="SourceSiblingOutputDirectoryOption" />
+                <ComboBoxItem x:Name="SettingsDefaultDirectoryOption" />
+                <ComboBoxItem x:Name="MainPageOutputDirectoryOption" />
+            </ComboBox>
+            <TextBox
+                x:Name="MainPageOutputDirectoryTextBox"
+                Width="240"
+                VerticalAlignment="Center"
+                Visibility="Collapsed"
+                LostFocus="OnMainPageOutputDirectoryLostFocus" />
+            <Button
+                x:Name="BrowseMainPageOutputDirectoryButton"
+                VerticalAlignment="Center"
+                Visibility="Collapsed"
+                Click="OnBrowseMainPageOutputDirectoryClick"
+                Content="..." />
         </StackPanel>
 
         <StackPanel Grid.Row="2" Spacing="6">

@@ -31,6 +31,11 @@
   <data name="Presets.Selected" xml:space="preserve"><value>'{0}' is now the current preset for newly queued jobs.</value></data>
   <data name="Presets.CurrentSelection" xml:space="preserve"><value>Current preset</value></data>
   <data name="Conversion.PresetLabel" xml:space="preserve"><value>Preset</value></data>
+  <data name="Conversion.OutputDirectoryLabel" xml:space="preserve"><value>Output</value></data>
+  <data name="Conversion.OutputDirectory.SourceSibling" xml:space="preserve"><value>Source folder / output</value></data>
+  <data name="Conversion.OutputDirectory.Settings" xml:space="preserve"><value>Settings output folder</value></data>
+  <data name="Conversion.OutputDirectory.MainPage" xml:space="preserve"><value>Choose output folder</value></data>
+  <data name="Conversion.OutputDirectory.Browse" xml:space="preserve"><value>Browse output folder</value></data>
   <data name="Conversion.ToolbarCollapse" xml:space="preserve"><value>Collapse toolbar</value></data>
   <data name="Conversion.ToolbarExpand" xml:space="preserve"><value>Expand toolbar</value></data>
   <data name="Conversion.PresetDefault" xml:space="preserve"><value>Default (MP4 · H.264 · AAC)</value></data>

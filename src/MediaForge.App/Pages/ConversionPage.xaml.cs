@@ -18,6 +18,8 @@ public sealed partial class ConversionPage : Page
     private readonly ObservableCollection<ImportedMediaRow> _media = [];
     private bool _presetLoaded;
     private bool _isCommandBarCollapsed;
+    private ApplicationSettings _settings = ApplicationSettings.CreateDefault();
+    private bool _outputDirectorySettingsLoaded;
 
     public ConversionPage()
     {
@@ -50,6 +52,13 @@ public sealed partial class ConversionPage : Page
         EmptyTitleTextBlock.Text = strings.GetString("Conversion.EmptyTitle");
         EmptyDescriptionTextBlock.Text = strings.GetString("Conversion.EmptyDescription");
         PresetLabel.Text = strings.GetString("Conversion.PresetLabel");
+        OutputDirectoryLabel.Text = strings.GetString("Conversion.OutputDirectoryLabel");
+        SourceSiblingOutputDirectoryOption.Content = strings.GetString("Conversion.OutputDirectory.SourceSibling");
+        SettingsDefaultDirectoryOption.Content = strings.GetString("Conversion.OutputDirectory.Settings");
+        MainPageOutputDirectoryOption.Content = strings.GetString("Conversion.OutputDirectory.MainPage");
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(
+            BrowseMainPageOutputDirectoryButton,
+            strings.GetString("Conversion.OutputDirectory.Browse"));
     }
 
     private async void OnAddFilesClick(object sender, RoutedEventArgs args)
@@ -64,6 +73,13 @@ public sealed partial class ConversionPage : Page
     private async void OnLoaded(object sender, RoutedEventArgs args)
     {
         Loaded -= OnLoaded;
+        _settings = (await App.Services.SettingsStore.LoadAsync()).Settings;
+        OutputDirectoryModeComboBox.SelectionChanged -= OnOutputDirectoryModeChanged;
+        OutputDirectoryModeComboBox.SelectedIndex = (int)_settings.OutputDirectoryMode;
+        MainPageOutputDirectoryTextBox.Text = _settings.MainPageOutputDirectory ?? string.Empty;
+        OutputDirectoryModeComboBox.SelectionChanged += OnOutputDirectoryModeChanged;
+        _outputDirectorySettingsLoaded = true;
+        UpdateOutputDirectoryControls();
         await LoadPresetsAsync();
     }
 
@@ -99,6 +115,57 @@ public sealed partial class ConversionPage : Page
         App.Services.ConversionQueueRuntime.SetSelectedPreset(selected?.Preset);
     }
 
+    private async void OnOutputDirectoryModeChanged(object sender, SelectionChangedEventArgs args)
+    {
+        if (!_outputDirectorySettingsLoaded) return;
+        UpdateOutputDirectoryControls();
+        await PersistOutputDirectorySettingsAsync();
+    }
+
+    private async void OnMainPageOutputDirectoryLostFocus(object sender, RoutedEventArgs args)
+    {
+        if (!_outputDirectorySettingsLoaded) return;
+        await SaveMainPageOutputDirectoryAsync();
+    }
+
+    private async void OnBrowseMainPageOutputDirectoryClick(object sender, RoutedEventArgs args)
+    {
+        var picker = new FolderPicker();
+        picker.FileTypeFilter.Add("*");
+        WinRT.Interop.InitializeWithWindow.Initialize(picker, App.WindowHandle);
+        var folder = await picker.PickSingleFolderAsync();
+        if (folder is null) return;
+
+        MainPageOutputDirectoryTextBox.Text = folder.Path;
+        await SaveMainPageOutputDirectoryAsync();
+    }
+
+    private void UpdateOutputDirectoryControls()
+    {
+        var isMainPageDirectory = OutputDirectoryModeComboBox.SelectedIndex == (int)OutputDirectoryMode.MainPageDirectory;
+        MainPageOutputDirectoryTextBox.Visibility = isMainPageDirectory ? Visibility.Visible : Visibility.Collapsed;
+        BrowseMainPageOutputDirectoryButton.Visibility = isMainPageDirectory ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private async Task SaveMainPageOutputDirectoryAsync()
+    {
+        await PersistOutputDirectorySettingsAsync();
+    }
+
+    private async Task PersistOutputDirectorySettingsAsync()
+    {
+        var latest = await App.Services.SettingsStore.LoadAsync();
+        _settings = latest.Settings with
+        {
+            SchemaVersion = ApplicationSettings.CurrentSchemaVersion,
+            OutputDirectoryMode = (OutputDirectoryMode)OutputDirectoryModeComboBox.SelectedIndex,
+            MainPageOutputDirectory = EmptyToNull(MainPageOutputDirectoryTextBox.Text)
+        };
+        await App.Services.SettingsStore.SaveAsync(_settings);
+    }
+
+    private static string? EmptyToNull(string value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
     private void OnToggleCommandBarClick(object sender, RoutedEventArgs args)
     {
         _isCommandBarCollapsed = !_isCommandBarCollapsed;
@@ -122,6 +189,7 @@ public sealed partial class ConversionPage : Page
     {
         try
         {
+            await PersistOutputDirectorySettingsAsync();
             var settings = (await App.Services.SettingsStore.LoadAsync()).Settings;
             var resolution = App.Services.FfmpegToolResolver.Resolve(settings.FfmpegDirectory);
             if (!resolution.IsSuccess)

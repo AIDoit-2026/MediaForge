@@ -64,6 +64,8 @@ public sealed class AtomicJsonFileStoreTests : IDisposable
             Theme = ApplicationTheme.Dark,
             FfmpegDirectory = "C:\\Tools\\ffmpeg",
             DefaultOutputDirectory = "D:\\Converted",
+            OutputDirectoryMode = OutputDirectoryMode.MainPageDirectory,
+            MainPageOutputDirectory = "E:\\Exports",
             OutputConflictPolicy = OutputConflictPolicy.Skip,
             MaxConcurrentJobs = 3,
             WindowWidth = 1280,

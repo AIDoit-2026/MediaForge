@@ -10,9 +10,11 @@ public sealed record ApplicationSettings(
     int MaxConcurrentJobs,
     FolderImportSettings LastFolderImport,
     int WindowWidth = 1680,
-    int WindowHeight = 800)
+    int WindowHeight = 800,
+    OutputDirectoryMode OutputDirectoryMode = OutputDirectoryMode.SourceSiblingOutputDirectory,
+    string? MainPageOutputDirectory = null)
 {
-    public const int CurrentSchemaVersion = 1;
+    public const int CurrentSchemaVersion = 2;
 
     public static ApplicationSettings CreateDefault() => new(
         SchemaVersion: CurrentSchemaVersion,
@@ -24,5 +26,7 @@ public sealed record ApplicationSettings(
         MaxConcurrentJobs: 1,
         LastFolderImport: FolderImportSettings.CreateDefault(),
         WindowWidth: 1680,
-        WindowHeight: 800);
+        WindowHeight: 800,
+        OutputDirectoryMode: OutputDirectoryMode.SourceSiblingOutputDirectory,
+        MainPageOutputDirectory: null);
 }
