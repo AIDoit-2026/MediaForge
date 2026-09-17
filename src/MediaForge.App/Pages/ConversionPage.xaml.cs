@@ -17,6 +17,7 @@ public sealed partial class ConversionPage : Page
 {
     private readonly ObservableCollection<ImportedMediaRow> _media = [];
     private bool _presetLoaded;
+    private bool _isCommandBarCollapsed;
 
     public ConversionPage()
     {
@@ -45,6 +46,7 @@ public sealed partial class ConversionPage : Page
         ClearButton.Label = strings.GetString("Conversion.Clear");
         ExitButton.Label = strings.GetString("Application.Exit");
         ExitButton.SetValue(Microsoft.UI.Xaml.Automation.AutomationProperties.NameProperty, ExitButton.Label);
+        UpdateCommandBarToggle();
         EmptyTitleTextBlock.Text = strings.GetString("Conversion.EmptyTitle");
         EmptyDescriptionTextBlock.Text = strings.GetString("Conversion.EmptyDescription");
         PresetLabel.Text = strings.GetString("Conversion.PresetLabel");
@@ -95,6 +97,25 @@ public sealed partial class ConversionPage : Page
         if (!_presetLoaded) return;
         var selected = PresetComboBox.SelectedItem as PresetComboBoxItem;
         App.Services.ConversionQueueRuntime.SetSelectedPreset(selected?.Preset);
+    }
+
+    private void OnToggleCommandBarClick(object sender, RoutedEventArgs args)
+    {
+        _isCommandBarCollapsed = !_isCommandBarCollapsed;
+        UpdateCommandBarToggle();
+    }
+
+    private void UpdateCommandBarToggle()
+    {
+        FloatingCommandBar.DefaultLabelPosition = _isCommandBarCollapsed
+            ? CommandBarDefaultLabelPosition.Collapsed
+            : CommandBarDefaultLabelPosition.Right;
+        ToggleCommandBarButton.Icon = new SymbolIcon(_isCommandBarCollapsed ? Symbol.Forward : Symbol.Back);
+        var label = App.Services.Localization.GetString(
+            _isCommandBarCollapsed ? "Conversion.ToolbarExpand" : "Conversion.ToolbarCollapse");
+        ToggleCommandBarButton.Label = label;
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(ToggleCommandBarButton, label);
+        ToolTipService.SetToolTip(ToggleCommandBarButton, label);
     }
 
     private async void OnStartClick(object sender, RoutedEventArgs args)
@@ -269,7 +290,8 @@ public sealed partial class ConversionPage : Page
     {
         var settings = (await App.Services.SettingsStore.LoadAsync()).Settings;
         var dialog = new FolderImportDialog(settings.LastFolderImport) { XamlRoot = XamlRoot };
-        if (await dialog.ShowAsync() != ContentDialogResult.Primary || dialog.Result is not { } import)
+        await dialog.ShowAsync();
+        if (dialog.Result is not { } import)
         {
             return;
         }

@@ -25,8 +25,8 @@ public sealed partial class FolderImportDialog : ContentDialog
     {
         var strings = App.Services.Localization;
         Title = strings.GetString("FolderImport.Title");
-        PrimaryButtonText = strings.GetString("FolderImport.Import");
-        CloseButtonText = strings.GetString("FolderImport.Cancel");
+        ImportButton.Content = strings.GetString("FolderImport.Import");
+        CancelButton.Content = strings.GetString("FolderImport.Cancel");
         DirectoryTextBox.Header = strings.GetString("FolderImport.Folder");
         DirectoryTextBox.PlaceholderText = strings.GetString("FolderImport.FolderPlaceholder");
         BrowseDirectoryButton.SetValue(Microsoft.UI.Xaml.Automation.AutomationProperties.NameProperty, "Browse folder");
@@ -55,12 +55,11 @@ public sealed partial class FolderImportDialog : ContentDialog
         ExpressionTextBox.IsEnabled = FilterModeComboBox.SelectedIndex != (int)FileNameFilterMode.All;
     }
 
-    private void OnPrimaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
+    private void OnImportClick(object sender, RoutedEventArgs args)
     {
         var directory = DirectoryTextBox.Text.Trim();
         if (!Directory.Exists(directory))
         {
-            args.Cancel = true;
             ShowError(App.Services.Localization.GetString("FolderImport.DirectoryRequired"));
             return;
         }
@@ -72,7 +71,6 @@ public sealed partial class FolderImportDialog : ContentDialog
         }
         catch (ArgumentException error)
         {
-            args.Cancel = true;
             ShowError(error.Message);
             return;
         }
@@ -82,7 +80,10 @@ public sealed partial class FolderImportDialog : ContentDialog
             RecursiveCheckBox.IsChecked == true,
             mode,
             ExpressionTextBox.Text.Trim());
+        Hide();
     }
+
+    private void OnCancelClick(object sender, RoutedEventArgs args) => Hide();
 
     private void ShowError(string message)
     {

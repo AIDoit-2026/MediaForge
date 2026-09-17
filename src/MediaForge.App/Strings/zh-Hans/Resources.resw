@@ -31,6 +31,8 @@
   <data name="Presets.Selected" xml:space="preserve"><value>已选择“{0}”，新加入的任务将使用该预设。</value></data>
   <data name="Presets.CurrentSelection" xml:space="preserve"><value>当前使用的预设</value></data>
   <data name="Conversion.PresetLabel" xml:space="preserve"><value>预设</value></data>
+  <data name="Conversion.ToolbarCollapse" xml:space="preserve"><value>收起工具栏</value></data>
+  <data name="Conversion.ToolbarExpand" xml:space="preserve"><value>展开工具栏</value></data>
   <data name="Conversion.PresetDefault" xml:space="preserve"><value>默认（MP4 · H.264 · AAC）</value></data>
   <data name="Settings.AutoSaved" xml:space="preserve"><value>设置已自动保存。</value></data>
   <data name="EnglishLanguageOption.Content" xml:space="preserve"><value>English</value></data>

@@ -3,9 +3,7 @@
     x:Class="MediaForge.App.Pages.FolderImportDialog"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    DefaultButton="Primary"
-    Width="800"
-    PrimaryButtonClick="OnPrimaryButtonClick">
+    Width="800">
     <ContentDialog.Resources>
         <!-- The default template caps its inner border at ContentDialogMaxWidth (800). -->
         <x:Double x:Key="ContentDialogMaxWidth">800</x:Double>
@@ -31,5 +29,12 @@
         </ComboBox>
         <TextBox x:Name="ExpressionTextBox" />
         <InfoBar x:Name="ValidationInfoBar" IsOpen="False" IsClosable="False" Severity="Error" />
+        <StackPanel
+            HorizontalAlignment="Center"
+            Orientation="Horizontal"
+            Spacing="30">
+            <Button x:Name="ImportButton" Click="OnImportClick" />
+            <Button x:Name="CancelButton" Click="OnCancelClick" />
+        </StackPanel>
     </StackPanel>
 </ContentDialog>
