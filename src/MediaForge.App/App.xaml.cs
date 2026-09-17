@@ -38,6 +38,17 @@ public partial class App : Application
     public static nint WindowHandle =>
         WinRT.Interop.WindowNative.GetWindowHandle(Window);
 
+    public static void ShowError(string title, string description)
+    {
+        if (DispatcherQueue.HasThreadAccess)
+        {
+            (Window as MainWindow)?.ShowError(title, description);
+            return;
+        }
+
+        _ = DispatcherQueue.TryEnqueue(() => (Window as MainWindow)?.ShowError(title, description));
+    }
+
     internal static Task ShutdownAsync()
     {
         lock (ShutdownGate)
@@ -176,8 +187,11 @@ public partial class App : Application
 
     private static void OnUnhandledException(
         object sender,
-        Microsoft.UI.Xaml.UnhandledExceptionEventArgs args) =>
+        Microsoft.UI.Xaml.UnhandledExceptionEventArgs args)
+    {
         Services?.Logger.LogError("UnhandledUiException", args.Exception);
+        ShowError("Application error", args.Exception.Message);
+    }
 
     private static void OnUnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs args)
     {

@@ -129,6 +129,7 @@ public sealed partial class SettingsPage : Page
         if (concurrency is < 1 or > 4)
         {
             ShowStatus(Strings("Settings.InvalidConcurrency"), InfoBarSeverity.Error);
+            App.ShowError("Settings could not be saved", Strings("Settings.InvalidConcurrency"));
             return;
         }
 
@@ -181,6 +182,7 @@ public sealed partial class SettingsPage : Page
         if (concurrency is < 1 or > 4)
         {
             ShowStatus(Strings("Settings.InvalidConcurrency"), InfoBarSeverity.Error);
+            App.ShowError("Settings could not be saved", Strings("Settings.InvalidConcurrency"));
             return null;
         }
         return _settings with

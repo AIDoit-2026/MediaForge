@@ -2,6 +2,7 @@ using System.Runtime.InteropServices;
 using MediaForge.App.Services;
 using MediaForge.Core.Configuration;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Media.Animation;
 using Windows.Graphics;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -121,6 +122,37 @@ public sealed partial class MainWindow : Window
             Text = $"MediaForge could not finish loading.\n\n{message}\n\nSee config\\logs\\application.ndjson for details.",
             TextWrapping = TextWrapping.Wrap
         };
+    }
+
+    public void ShowError(string title, string description)
+    {
+        ErrorNotificationTitle.Text = title;
+        ErrorNotificationDescription.Text = description;
+        ErrorNotification.Visibility = Visibility.Visible;
+        AnimateErrorNotification(400, 0);
+    }
+
+    private void OnCloseErrorNotificationClick(object sender, RoutedEventArgs args)
+    {
+        var animation = AnimateErrorNotification(0, 400);
+        animation.Completed += (_, _) => ErrorNotification.Visibility = Visibility.Collapsed;
+    }
+
+    private Storyboard AnimateErrorNotification(double from, double to)
+    {
+        var storyboard = new Storyboard();
+        var animation = new DoubleAnimation
+        {
+            From = from,
+            To = to,
+            Duration = new Duration(TimeSpan.FromMilliseconds(220)),
+            EnableDependentAnimation = true
+        };
+        Storyboard.SetTarget(animation, ErrorNotificationTransform);
+        Storyboard.SetTargetProperty(animation, "TranslateX");
+        storyboard.Children.Add(animation);
+        storyboard.Begin();
+        return storyboard;
     }
 
     private void OnAppWindowChanged(

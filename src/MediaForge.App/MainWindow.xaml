@@ -25,5 +25,46 @@
         </TitleBar>
 
         <Frame x:Name="RootFrame" Grid.Row="1" />
+
+        <Border
+            x:Name="ErrorNotification"
+            Grid.RowSpan="2"
+            Width="380"
+            Margin="0,48,20,0"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Top"
+            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+            BorderBrush="{ThemeResource SystemControlErrorTextForegroundBrush}"
+            BorderThickness="1"
+            CornerRadius="4"
+            Padding="16"
+            Visibility="Collapsed">
+            <Border.RenderTransform>
+                <CompositeTransform x:Name="ErrorNotificationTransform" TranslateX="400" />
+            </Border.RenderTransform>
+            <Grid ColumnSpacing="12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <FontIcon
+                    Glyph="&#xEA39;"
+                    FontSize="20"
+                    Foreground="{ThemeResource SystemControlErrorTextForegroundBrush}" />
+                <StackPanel Grid.Column="1" Spacing="4">
+                    <TextBlock x:Name="ErrorNotificationTitle" FontWeight="SemiBold" />
+                    <TextBlock x:Name="ErrorNotificationDescription" TextWrapping="Wrap" />
+                </StackPanel>
+                <Button
+                    Grid.Column="2"
+                    Padding="8"
+                    VerticalAlignment="Top"
+                    Click="OnCloseErrorNotificationClick"
+                    ToolTipService.ToolTip="Close error notification">
+                    <FontIcon Glyph="&#xE711;" />
+                </Button>
+            </Grid>
+        </Border>
     </Grid>
 </Window>

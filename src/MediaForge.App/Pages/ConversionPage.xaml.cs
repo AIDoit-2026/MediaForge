@@ -191,10 +191,16 @@ public sealed partial class ConversionPage : Page
         {
             await PersistOutputDirectorySettingsAsync();
             var settings = (await App.Services.SettingsStore.LoadAsync()).Settings;
+            if (settings.OutputDirectoryMode == OutputDirectoryMode.SettingsDefaultDirectory &&
+                (string.IsNullOrWhiteSpace(settings.DefaultOutputDirectory) || !Directory.Exists(settings.DefaultOutputDirectory)))
+            {
+                App.ShowError("Output folder unavailable", "The output folder configured in Settings does not exist. Choose an existing folder or select a different output option.");
+                return;
+            }
             var resolution = App.Services.FfmpegToolResolver.Resolve(settings.FfmpegDirectory);
             if (!resolution.IsSuccess)
             {
-                ShowStatus(App.Services.Localization.GetString("Conversion.ToolsNotFound"), InfoBarSeverity.Error);
+                App.ShowError("Conversion cannot start", App.Services.Localization.GetString("Conversion.ToolsNotFound"));
                 return;
             }
 
@@ -206,9 +212,9 @@ public sealed partial class ConversionPage : Page
                 .FirstOrDefault(result => !result.IsSupported);
             if (unsupported is not null)
             {
-                ShowStatus(string.Format(
+                App.ShowError("Conversion cannot start", string.Format(
                     App.Services.Localization.GetString("Conversion.UnsupportedFeature"),
-                    unsupported.MissingCapability), InfoBarSeverity.Error);
+                    unsupported.MissingCapability));
                 return;
             }
 
@@ -241,7 +247,7 @@ public sealed partial class ConversionPage : Page
         catch (OperationCanceledException) { throw; }
         catch (Exception error)
         {
-            ShowStatus(error.Message, InfoBarSeverity.Error);
+            App.ShowError("Conversion cannot start", error.Message);
         }
     }
 
@@ -370,6 +376,7 @@ public sealed partial class ConversionPage : Page
             if (!resolution.IsSuccess)
             {
                 AddError(import.Directory!, App.Services.Localization.GetString("Conversion.ToolsNotFound"));
+                App.ShowError("Folder import failed", App.Services.Localization.GetString("Conversion.ToolsNotFound"));
                 return;
             }
 
@@ -389,7 +396,7 @@ public sealed partial class ConversionPage : Page
         catch (Exception error)
         {
             AddError(import.Directory!, error.Message);
-            ShowStatus(error.Message, InfoBarSeverity.Error);
+            App.ShowError("Folder import failed", error.Message);
         }
     }
 
@@ -419,6 +426,7 @@ public sealed partial class ConversionPage : Page
         if (!resolution.IsSuccess)
         {
             foreach (var file in files) AddError(file.Path, App.Services.Localization.GetString("Conversion.ToolsNotFound"));
+            App.ShowError("File import failed", App.Services.Localization.GetString("Conversion.ToolsNotFound"));
             return;
         }
 
@@ -434,7 +442,10 @@ public sealed partial class ConversionPage : Page
             }
         }
         if (failed > 0)
+        {
+            App.ShowError("File import failed", $"Could not read {failed} file(s). Review the file details in the conversion list.");
             ShowStatus($"Could not read {failed} file(s). They remain in the list with the error details.", InfoBarSeverity.Warning);
+        }
     }
 
     private static string FormatProbeError(Exception error) => error switch

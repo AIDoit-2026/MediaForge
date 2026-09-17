@@ -119,40 +119,48 @@ public sealed class ConversionQueueRuntime : IDisposable
 
     private async Task ExecuteAsync(ConversionJobSnapshot job, CancellationToken cancellationToken)
     {
-        var settings = (await _settingsStore.LoadAsync(cancellationToken)).Settings;
-        var toolset = _toolResolver.Resolve(settings.FfmpegDirectory).Toolset
-            ?? throw new InvalidOperationException("FFmpeg and FFprobe are unavailable.");
-        var source = await new FfprobeMediaProbeService(toolset, _processRunner).ProbeAsync(job.InputPath, cancellationToken);
-        var profile = ConversionProfileFactory.Create(job.Parameters);
-        var capabilities = await _capabilityService.GetAsync(toolset, forceRefresh: false, cancellationToken);
-        var validation = new ConversionValidator().Validate(source, profile, capabilities);
-        if (!validation.IsValid)
+        try
         {
-            throw new InvalidOperationException(string.Join("; ", validation.Issues
-                .Where(issue => issue.Severity == ValidationSeverity.Error)
-                .Select(issue => issue.Code)));
-        }
+            var settings = (await _settingsStore.LoadAsync(cancellationToken)).Settings;
+            var toolset = _toolResolver.Resolve(settings.FfmpegDirectory).Toolset
+                ?? throw new InvalidOperationException("FFmpeg and FFprobe are unavailable.");
+            var source = await new FfprobeMediaProbeService(toolset, _processRunner).ProbeAsync(job.InputPath, cancellationToken);
+            var profile = ConversionProfileFactory.Create(job.Parameters);
+            var capabilities = await _capabilityService.GetAsync(toolset, forceRefresh: false, cancellationToken);
+            var validation = new ConversionValidator().Validate(source, profile, capabilities);
+            if (!validation.IsValid)
+            {
+                throw new InvalidOperationException(string.Join("; ", validation.Issues
+                    .Where(issue => issue.Severity == ValidationSeverity.Error)
+                    .Select(issue => issue.Code)));
+            }
 
-        var spec = new ConversionJobSpec(
-            source,
-            job.OutputPath,
-            TemporaryOutputPathFactory.Create(job.OutputPath, job.Id),
-            profile,
-            DateTimeOffset.UtcNow,
-            job.Id);
-        var plan = new FfmpegCommandBuilder().Build(spec);
-        var startedAt = DateTimeOffset.UtcNow;
-        var reporter = new Progress<FfmpegProgressUpdate>(update => ReportProgress(job.Id, source.Duration, startedAt, update));
-        var result = _conversionRunner is IConversionProgressRunner progressRunner
-            ? await progressRunner.RunWithProgressAsync(toolset.FfmpegPath, plan, settings.OutputConflictPolicy, reporter, cancellationToken)
-            : await _conversionRunner.RunAsync(toolset.FfmpegPath, plan, settings.OutputConflictPolicy, cancellationToken);
-        if (result.Skipped)
-        {
-            throw new ConversionSkippedException();
+            var spec = new ConversionJobSpec(
+                source,
+                job.OutputPath,
+                TemporaryOutputPathFactory.Create(job.OutputPath, job.Id),
+                profile,
+                DateTimeOffset.UtcNow,
+                job.Id);
+            var plan = new FfmpegCommandBuilder().Build(spec);
+            var startedAt = DateTimeOffset.UtcNow;
+            var reporter = new Progress<FfmpegProgressUpdate>(update => ReportProgress(job.Id, source.Duration, startedAt, update));
+            var result = _conversionRunner is IConversionProgressRunner progressRunner
+                ? await progressRunner.RunWithProgressAsync(toolset.FfmpegPath, plan, settings.OutputConflictPolicy, reporter, cancellationToken)
+                : await _conversionRunner.RunAsync(toolset.FfmpegPath, plan, settings.OutputConflictPolicy, cancellationToken);
+            if (result.Skipped)
+            {
+                throw new ConversionSkippedException();
+            }
+            if (!result.Succeeded)
+            {
+                throw new InvalidOperationException(result.StandardError);
+            }
         }
-        if (!result.Succeeded)
+        catch (Exception error) when (error is not OperationCanceledException)
         {
-            throw new InvalidOperationException(result.StandardError);
+            App.ShowError("Conversion failed", error.Message);
+            throw;
         }
     }
 
