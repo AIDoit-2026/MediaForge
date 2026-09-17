@@ -9,8 +9,8 @@ public sealed record ApplicationSettings(
     OutputConflictPolicy OutputConflictPolicy,
     int MaxConcurrentJobs,
     FolderImportSettings LastFolderImport,
-    int WindowWidth = 800,
-    int WindowHeight = 600)
+    int WindowWidth = 1680,
+    int WindowHeight = 800)
 {
     public const int CurrentSchemaVersion = 1;
 
